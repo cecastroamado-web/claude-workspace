@@ -1,0 +1,3 @@
+[submodule "finance-agent"]
+	path = finance-agent
+	url = https://github.com/cecastroamado-web/finance-agent.git
