@@ -54,6 +54,12 @@ pytest tests/test_bling.py -v   # single test file
 - NFS-e revenue: `bling_nfse` WHERE `situacao=1` only (situacao=3 = anulada, NOT revenue)
 - Never use `bling_orders` table as revenue source
 
+**Scheduler alert rules (`agent/scheduler.py` — critical):**
+- **Telegram uses legacy `parse_mode="Markdown"`** (`agent/telegram_client.py`), NOT MarkdownV2. Backslash escapes render LITERALLY on screen — never write `\.`, `\!`, `\(`, `\)`, `\-`, `\+`, `\$` in alert text. Only `* _ [ \`` are special in legacy; leave everything else unescaped (the client auto-falls back to plain text on a parse error).
+- **`_notify` / `send_text` return `bool`** (True only if Telegram delivered). A job must check it BEFORE marking any persisted state — `set_scheduler_state(*_last_sent)`, cooldowns in `_alert_state`, or advancing `last_seen_*_id`. Pattern: `ok = await self._notify(...); if ok: <mark state>` else `logger.error(...)`. Logging "enviado" unconditionally is a false positive that silently drops alerts during a network/DNS outage.
+- When iterating and sending per-item (high-value orders, non-full orders), advance the `last_seen_*_id` pointer per successfully-sent item and `break` on the first failure — never advance past an unsent item, or it's lost forever.
+- Provisão alert (`_run_check_provisao`) and dashboard (`/api/provisao`) share one source of truth: the alert calls `get_provisao()`. Model is no-anticipation (money_release_date real do MP). Don't reintroduce the old anticipation/média-diária logic.
+
 ---
 
 ### 2. `email-agent` — Gmail + Telegram + Claude AI
@@ -80,6 +86,14 @@ pytest tests/ -v
 - `agent/tools.py` and `agent/reports.py` — Tool definitions with prompt caching (`cache_control: {"type": "ephemeral"}`)
 - `accounts.json` — Per-account Gmail + Calendar OAuth tokens (see `accounts.example.json`)
 - `agent/financeiro/` — Financial module reading Google Sheets (10 bank accounts, 6 countries)
+- `agent/scheduler.py` — Scheduled jobs: `payment_scheduler` (daily) + `international_results_scheduler` (day 2 of each month at 09h05, sends operational result per country vs. 2025 average via Telegram)
+- `agent/dashboard/app.py` — Streamlit dashboard with: DRE, IVA panel, Repasse de Mídia (wire flow to Reweb Corp + Sistemas Reweb USD 5,152/month from Feb/26), Fluxo de Wire por Destino (Reweb/Wire Brasil/Consultores/Outros), Compromissos por país
+- `agent/payments/commitments_reader.py` — Reads "Compromissos" tab (cols A-F: Nome, Pacote, Valor, Dia Vcto, Ativo, Condição) from each country's spreadsheet
+
+**Dashboard wire classification (app.py):**
+- `_WIRE_SENDERS = {"Colombia", "Mexico", "Ecuador"}` — countries that send wire to Reweb Corp for media
+- Wire destinations: `wire_midia` (Reweb/RW Corp), `wire_brasil` (CR2/"Wire Brasil"), `wire_consultores` (Consulexpress/Partner Share), `wire_outros` (remaining)
+- Sistemas Reweb: USD 8,703/month until Jan/2026; USD 5,152/month from Feb/2026 (`_reweb_sistemas()`)
 
 **AI features:** Prompt caching on system prompts, streaming with progressive Telegram edits (0.8s interval), history summarization via Haiku when >12 messages, Extended Thinking for complex financial reports.
 
