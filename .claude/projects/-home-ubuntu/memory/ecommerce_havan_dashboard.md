@@ -48,6 +48,8 @@ Dashboard dedicado do canal Havan no `ecommerce-agent` (`agent/havan_scraper.py`
 
 **Card "Backlog a faturar" (ex-"Backlog em aberto", `ae14572`):** valor e unidades = `max(0, pedidos_abertos − em_transito_qtd)` × atacado — pedido do usuário: parte do backlog JÁ FOI faturada (NF em trânsito p/ o CD) e não pode contar como "a faturar". Breakdown com colunas Pedidos abertos / Em trânsito / A faturar. Mesma regra da coluna "A faturar" da conciliação ([[ecommerce_havan_backlog_faturamento_transito]]).
 
+**Card "Distribuição por filial" (`93a080d`, 05/jun/2026):** em quantas das ~110 filiais da rede cada produto está. "Distribuído" = filial com estoque OU pedido aberto OU venda 30d (fonte: matriz `filiais_produto` do `/api/havan`, tabela `havan_branch_product`, tudo client-side). Colunas: nº filiais + % da rede, c/ estoque, vendendo 30d, **% praças vendendo** (vendendo÷distribuído; verde ≥60%, âmbar <40%). Clique → modal com a lista de filiais (UF, venda 30d/7d, estoque, pedidos). Leitura de negócio validada na criação: Case 98 filiais mas só 45% vendendo (confirma sobre-estoque); USB-C 3M 77% (praça eficiente); 12V 3M (26) e Slim Pro (18) com distribuição baixa E muito em-trânsito → Havan deve expandir praças na entrega.
+
 Régua de pagamento Havan (cravada com CFO): **120 dias da ENTREGA no CD Barra Velha** (não da emissão; há delay de agendamento ~15d default ajustável). Prazo confirmado: NFs Havan já emitidas estão em "A Receber" do fluxo.
 
 Relacionado: [[ecommerce-ima-sugestao-pedido]] (demanda ML+Havan no pedido de imãs), [[ecommerce-havan-devolucoes]], [[ecommerce-havan-backlog-faturamento-transito]].

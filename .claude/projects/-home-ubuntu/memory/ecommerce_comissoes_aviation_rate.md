@@ -11,3 +11,5 @@ Apuração de comissões Aviation usa **11% fixo** como alíquota Simples Nacion
 **How to apply:** Não tentar "consertar" essa divergência entre `commission-report`/`vendor-roi-report` e `compute_profitability` para Aviation. As 3 fontes vão divergir nessa parte e está certo. Validações Aviation: imposto = receita × 11%. NF Aviation jan/26 R$ 57.700 → imposto comissão R$ 6.347 (11%); imposto rentabilidade real R$ 4.097 (7,10%). Os dois estão certos no contexto deles.
 
 **Aplicado a:** Aviation apenas. XConnect (Lucro Presumido) usa o cálculo padrão (PIS+COFINS+IRPJ+CSLL+ICMS líquido) consistente entre os endpoints.
+
+**Comissão pendente NÃO abate o lucro do painel (decisão de negócio, jun/2026):** no card de comissões, "Lucro líq. após comissão" desconta apenas as comissões **confirmadas** (NF com pagamento recebido do cliente). Comissão de NF ainda não recebida fica como "pendente" e só é paga ao vendedor DEPOIS que o cliente paga — confirmado pelo usuário ("o que não recebemos é pago depois"). NÃO tentar "corrigir" o painel para provisionar as pendentes no lucro.
