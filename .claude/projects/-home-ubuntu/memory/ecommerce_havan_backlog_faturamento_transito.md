@@ -1,6 +1,6 @@
 ---
 name: ecommerce_havan_backlog_faturamento_transito
-description: "RESOLVIDO (6127d17) — em-trânsito Havan agregado por mês; sobra acompanhar entrega real 09-10/jun"
+description: "Em-trânsito Havan: agregado por mês (6127d17) + POR PRODUTO em itens (7ad4de9, via havan_nfe_items + regra de data). Caveat: snapshot recebido SUBCONTA"
 metadata: 
   node_type: memory
   type: project
@@ -21,12 +21,37 @@ jun/2026 R$286k faturado, R$0 recebido → ~R$288k em trânsito.
 
 **Correção de dado:** as NFs de junho em trânsito são **SLIM PRO / HASTE / cabos 12V**
 (NF 581/582/583), NÃO cases. O "~970 cases" que eu havia estimado por valor÷R$295 estava
-errado (a NF mistura produtos). A quantidade real por produto sai item-level de
-`order_items_detail` (join `bling_order_id = bling_nfe_id`), com o código Havan embutido
-no nome do item como `#HVN#<produtoCodigo>#HVN#`.
+errado (a NF mistura produtos).
 
-**Único acompanhamento que sobra (operacional):** confirmar a entrega real após 09-10/jun
-(o em-trânsito deve cair sozinho quando a Havan registrar o recebimento).
+## Em-trânsito POR PRODUTO em itens (05/jun/2026, commit `7ad4de9`)
+Coluna "Em trânsito" (itens) na tabela por-produto da Conciliação + KPI "N itens em NF não
+entregue". Valores validados vs gabarito do CFO: **Cabo 12V 3m 1.000, Slim 850, Case 260,
+USB-C 5m 600, Haste 500 = 3.210 un** (todas das NFs de 01/06).
+
+**Definição correta (trava a fórmula):** em-trânsito = itens das **NF-e ainda não entregues
+no CD** = `data_emissao + ~15d > hoje` (`_HAVAN_TRANSITO_DELAY_DAYS`). Tudo emitido antes
+disso a Havan já recebeu. Regra dada pelo CFO: "a única coisa não entregue é a nota de 01/06".
+
+**⚠️ CAVEAT CRÍTICO — NÃO usar `faturado − recebido` do snapshot:** o campo `recebido_periodo`/
+`recebido_mensais` do snapshot Havan **SUBCONTA** o que a Havan recebeu (ex.: dizia 650 hastes
+quando o real é 1.800). `faturado − recebido_snapshot` infla o trânsito. A medida confiável é
+**itens das NFs não entregues** (regra de data acima).
+
+**Fonte dos itens:** tabela dedicada **`havan_nfe_items`** (nfe_id, sku, qty, data_emissao;
+PK nfe+sku; sync lazy via `get_nfe_details` agrupando por código). O bug antigo do
+`_run_bling_nfe_items_sync` (itens colapsados/destruídos em `order_items_detail`) foi
+**CORRIGIDO em 05/jun/2026** — ver [[ecommerce-nfe-items-sync-fix]]. `order_items_detail`
+voltou a ser confiável p/ rentabilidade; `havan_nfe_items` segue sendo a fonte do trânsito.
+Atenção: `havan_nfe_items` da NF 561 tem os 5 SKUs FATURADOS (inclui os devolvidos) —
+correto p/ trânsito histórico, mas não usar p/ receita.
+
+**SKU truncado na NF:** o código na NF pode vir cortado (`HVNCSPLIM660` na NF vs
+`HVNCSPLIM66007V` no snapshot) → match por igualdade e, no resto, por prefixo (`_havan_match_faturado`).
+
+**Coluna "A faturar"** (commit `ce88c49`, sessão paralela) = `pedidos_abertos − em_trânsito`
+(o que a Havan pediu e ainda não enviamos). Em 05/jun/2026 (`ae14572`) a mesma regra foi
+aplicada ao **card KPI "Backlog a faturar"** (ex-"Backlog em aberto") — valor e unidades
+descontam o em-trânsito; ver [[ecommerce-havan-dashboard]].
 
 **Plano arquivado** (camada por-NF com status/confirmação manual/matching #HVN#, caso um dia
 queiram auditoria por nota): `/home/ubuntu/.claude/plans/majestic-stirring-willow.md`.
