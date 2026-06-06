@@ -26,3 +26,4 @@ Jobs automáticos no `agent/scheduler.py`:
 - Tabela `scheduler_state` no DB rastreia `last_sent` por job para evitar duplicatas após restart
 - Catch-up: scheduler roda report perdido 90s após subir (daily 09h + intraday 12/15/18/21h)
 - Sync ML usa `date_approved` (não `date_created`) para bater com painel ML
+- **"Outros Canais" filtra CFOP de venda (fix 05/jun/2026)**: `get_external_sales_day` e `get_bling_sales_period` (`agent/db.py`) aplicam `_NFE_CFOP_VENDA_SQL` (import local de `agent.api` p/ evitar ciclo). Antes, remessas entravam como venda nos alertas — ex.: NF 585 XConnect CFOP 5949 (remessa p/ depósito temporário, R$ 11.694, Metalúrgica Gedeval). Regra do usuário: decidir venda vs não-venda **só pelo CFOP**.
