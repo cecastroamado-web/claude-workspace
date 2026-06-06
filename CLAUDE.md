@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Workspace Overview
 
-This home directory contains 5 independent Python projects, each in its own subdirectory. All use Python 3.12, `uv`/`hatchling` as build system (except `followup-agent` which uses `requirements.txt`), and `ruff`+`mypy` for linting/typing.
+This home directory contains 6 independent Python projects, each in its own subdirectory. All use Python 3.12, `uv`/`hatchling` as build system (except `followup-agent` which uses `requirements.txt`), and `ruff`+`mypy` for linting/typing.
 
 ---
 
@@ -190,6 +190,53 @@ pip install -r requirements.txt
 - `transcriber.py` — Optional Groq Whisper audio transcription
 - `memory.py` — Optional Mem0AI persistent memory
 - Scheduled reminders at 09h, 14h, 18h
+
+---
+
+### 6. `finance-agent` — Personal Finance Dashboard (PF)
+Personal finance dashboard: Pluggy (Open Finance Brasil) auto-sync → Claude AI categorization/insights → Telegram alerts → React/FastAPI dashboard.
+
+**Run:**
+```bash
+cd finance-agent && python3 main.py
+# systemd unit file exists (finance-agent.service) but is NOT installed yet — run manually
+```
+
+**Ports:** `8512` = FastAPI dashboard + React UI (JWT login), `8513` = Pluggy webhook (expose via ngrok in dev)
+
+**Frontend rebuild:**
+```bash
+cd finance-agent/dashboard-ui && npm run build
+```
+
+**Dev commands:**
+```bash
+cd finance-agent
+pip install -e ".[dev]"
+ruff check .
+mypy agent/
+python3 scripts/setup_pluggy.py --sandbox   # validate Pluggy credentials
+# No formal test suite yet
+```
+
+**Key architecture (16 modules in `agent/`):**
+- `agent/api.py` — FastAPI ~30 REST endpoints + JWT auth + SPA static files
+- `agent/scheduler.py` — 13 async loops + watchdog + catchup on restart
+- `agent/sync.py` — Pluggy → DB incremental sync (every 6h + webhook) + credit-card payment dedup (regex matching, not counted as expense)
+- `agent/categorizer.py` — Rules first → Claude Haiku batch of 20 + prompt caching; inline corrections auto-promote to rules after 3 identical confirmations
+- `agent/cashflow.py` — D+90 projection (balance + recurrings + CC invoice + DOW average)
+- `agent/recurring.py` — Monthly/biweekly/weekly recurrence detector (z-score)
+- `agent/anomalies.py` — 4 detectors: outlier (z-score), duplicate, overspend, new_merchant_large
+- `agent/ai_insights.py` — Daily/weekly brief with Sonnet + 12h cache, sent via Telegram at 09h
+- `agent/budgets.py` — Monthly budgets with 80%/100% alerts + rollover
+- `agent/db.py` — SQLite async (aiosqlite WAL), 13 tables
+- `agent/webhook.py` — Separate FastAPI on :8513, HMAC SHA256 validation
+- `dashboard-ui/` — React 19 + Vite 6 + TS + Tailwind v4 + TanStack Router/Query/Table; 7 routes, 13 feature components
+
+**Critical rules:**
+- Keep `PLUGGY_BASE_URL=https://api.sandbox.pluggy.ai` until the flow is validated (sandbox credentials: `user-ok`/`password-ok`)
+- Credit-card invoice payments are deduped in `sync.py` — never count them as expenses
+- See `PLAN.md` for full endpoint list and scheduler job inventory
 
 ---
 
