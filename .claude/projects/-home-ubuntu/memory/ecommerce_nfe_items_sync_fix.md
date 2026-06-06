@@ -24,4 +24,8 @@ Causa raiz dupla:
 - Gap que não fecha com frete → baixa o XML público da NF-e (`BlingClient.nfe_xml_totais`, link `xml` do GET /nfe/{id}) e desconta vSeg+vOutro+vIPI+vST−vDesc do ICMSTot antes de alertar (commit `96714e4`). Motivo: o JSON da API não expõe esses campos. NFs 50/51 Aviation tinham vOutro=79,90 (despesas acessórias) → gap 0,00, resolvidas.
 - NFs com gap explicado (frete/despesas) ficam no estado `nfe_items_gap_alerted` e não re-sincronizam a cada ciclo.
 
+- O job/alerta só considera NF-e de VENDA: filtro `_NFE_CFOP_VENDA_SQL` (importado de agent.api) no candidato (commit `43baeb1`). Remessas 59xx (ex.: NF 585 = 600 imãs p/ Metalúrgica Gedeval, fornecedora dos cases) e devoluções ficam fora.
+
+**Regra p/ auditorias ad-hoc:** ao listar NF-e "de venda" (receita, comissão, vendedor), SEMPRE aplicar `_NFE_CFOP_VENDA_SQL` — sem ele, remessas a fornecedores (CFOP 5949) aparecem como se fossem vendas (errei isso em 05/jun listando a Gedeval como venda sem vendedor).
+
 Relacionado: [[ecommerce-havan-devolucoes]], [[nfe-discount-override-descontos-contratuais-por-nf]], [[ecommerce_havan_backlog_faturamento_transito]].
