@@ -43,7 +43,8 @@
 - Ver [WIRE Intercompany — auto-detecção](email_wire_intercompany.md) — wire Motorleads↔Motorleads (ex.: Reweb Peru→Colombia) detectada por benef+desc, marcada `intercompany=True`, excluída do fluxo líquido por país em `app.py:1624`. EOM consolidado nunca foi afetado.
 - Ver ["Não Cobrar" em Data Prometida](email_data_prometida_nao_cobrar.md) — convenção operacional: cliente não aceita cobrança do time, CFO cobra pessoalmente. NÃO é exclusão — fatura continua válida no fluxo/atrasados. Ex.: Renault Mexico (faturas 9928/9929).
 - Ver [Filtros e overrides da Projeção mensal](email_projection_filtros.md) — limite PDD subiu 60→120d (mai/2026); override Irrecuperável via recv_state.json marca inv.juridico=True; radio include_overdue no topo da página Projeção (skip/today/eom).
-- Ver [Projeção EOM subindo após pagamento = baixa incompleta](email_projecao_baixa_incompleta.md) — WIRE In no banco sem Data Pagamento na aba Receitas infla EOM pelo valor recebido (paid_periods não filtra).
+- Ver [Projeção EOM subindo após pagamento = baixa incompleta](email_projecao_baixa_incompleta.md) — WIRE In no banco sem Data Pagamento na aba Receitas infla EOM (paid_periods não filtra). **+ bug inverso (corrigido 08/jun/2026, `895149c`):** paid_periods por (cliente,ano,mês) escondia da Projeção fatura em aberto quando uma irmã do mesmo mês era paga; agora exclui por nº de fatura (col M da Receitas). Caso Alden/Kia 9941 vs 9942; surfaceou 3 recebíveis reais (5→8).
+- Ver [Dashboard ops (Streamlit 8502)](email_dashboard_ops.md) — launch manual porta 8502, "Forçar Atualização" só limpa cache (mudança de código exige RESTART do processo), rate limit Sheets 60/min, col M=Fatura na Receitas.
 
 ### 2. ecommerce-agent (`/home/ubuntu/ecommerce-agent`)
 - Agente e-commerce para venda de acessórios Starlink
@@ -91,6 +92,8 @@
 
 #### Alertas CFO + scheduler
 - Ver [Alertas CFO ecommerce-agent](ecommerce_alertas_cfo.md) — inventário dos jobs (promo ML, vendas diárias, saldo, anomalias, NF-e, comissão, catálogo, ima-depletion), thresholds, state efêmero, catch-up no restart
+- Ver [CI GitHub do ecommerce-agent](ecommerce_ci_github.md) — ruff+mypy+pytest no push; ALTER manual no DB exige migração no db.py; side effects de import guardados por DB_PATH.exists(); fixtures forçam credenciais (poluição de coleta)
+- Ver [Feedback: testar só o que mudou](feedback_testar_so_o_que_mudou.md) — verificação 1:1 com o diff; pipeline de pedido Telegram NÃO está finalizado/validado (jun/2026), não usar como smoke test
 
 #### Fluxo de Caixa — simulações de financiamento (jun/2026)
 - Ver [Fluxo de caixa financiado](ecommerce_cashflow_financiado.md) — defaults: parcelamento impostos 12 meses/Selic 1,15%/início mês 01; spread Sicredi 0,40%. Empréstimo Capital de Giro **refatorado jun/2026 p/ modo único** (PV+parcelas+garantia+Selic+spread) com seletor **Price/SAC** (`emprestimo_giro_sistema`); removidos modos banco-propõe/comparar. Parcelamento de impostos agora tem **breakdown por tipo** por adesão (expansível). Proposta real Sicredi: garantia 600k → giro 900k em 60x = 1,53% a.m. **Card "Aplicado em Renda Fixa" na Visão Geral** (`/api/overview.saldo_rf_atual`; XConnect R$ 300k).
