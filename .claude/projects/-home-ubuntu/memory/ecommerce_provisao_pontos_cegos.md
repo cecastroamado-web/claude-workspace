@@ -41,5 +41,31 @@ saca com frequência: XConnect R$548,91 / Aviation R$1.860,41 (02/06).
 - Front: `ProvisaoCard.tsx` tile "Saldo atual" mostra total + banco + "MP a sacar";
   tipos em `lib/api.ts`.
 
+## Fix (c) — released de HOJE descartado (09/jun/2026)
+A entrada ML usava só `get_pending_releases_real` (status `pending`). Pedidos que
+viram `released` durante o dia eram excluídos (premissa: já sacados pro banco).
+Mas o saque MP→Inter ocorre **parcial ao longo do dia / só à noite** → released-de-
+hoje ainda não está no banco e sumia (`saldo_mp_disponivel` foi zerado em
+[[ecommerce-provisao-release-staleness]]). Sintoma: "a liberar hoje" combinado
+542,84 vs realidade ~3.013 (XC 0,0 / AV 596,78). Causa: AV = pending 1.486,78 −
+creditado 890 = 596,78; XC pending c/ retenção zerado pelo creditado 1.000.
+- **Fix:** novo `db.get_released_today_real(company, day)` (status `released` AND
+  `release_date == hoje` — só HOJE; released de dias anteriores seguem fora, preserva
+  o fix de 07/jun contra dupla contagem com o banco). Bloco 4 (api.py) tem loop (a.2)
+  que bucketiza os released-de-hoje em HOJE com a mesma matemática (retenção 25% XC).
+  O abate 4.1 (`ml_ja_creditado_hoje`, mesma fonte planilha que `get_bank_balance`)
+  remove a parte já sacada → seguro mesmo com saque parcial intradiário.
+- Pós-fix hoje: XC entrada projetada 624,91 / AV 2.388,23 / combinado 3.013,14.
+
+## Linha "A liberar bruto (painel ML)" (09/jun/2026)
+Novo campo por dia `entradas_ml_bruto` = líquido de taxas de (pending + released-
+hoje), **antes** de retenção/abate → bate 1:1 com o painel "a liberar" do ML
+(AV hoje 3.278 ≈ painel ~3.285). Acumulado em `slot["bruto_real"]` nos 2 loops reais
+(replace_all na linha do `net_real`); total `total_a_liberar_bruto_periodo` no resumo.
+ProvisaoCard mostra 2 linhas: **"A liberar bruto"** (= painel ML) e **"Entrada
+projetada"** (= bruto − retenção XC − ML já creditado no banco, alimenta o saldo).
+`entradas_ml_real`/`total_releases_reais_periodo` deixaram de ser "= painel ML" (são
+a entrada líquida projetada). Tipos em `lib/api.ts`.
+
 Testes `tests/test_pending_releases.py` seguem 8/8 OK. Ver [[ecommerce_money_release_date]],
-[[ecommerce_mp_payouts]], [[ecommerce_provisao_model]].
+[[ecommerce_mp_payouts]], [[ecommerce_provisao_model]], [[ecommerce-provisao-release-staleness]].
