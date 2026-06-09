@@ -57,15 +57,30 @@ creditado 890 = 596,78; XC pending c/ retenção zerado pelo creditado 1.000.
   remove a parte já sacada → seguro mesmo com saque parcial intradiário.
 - Pós-fix hoje: XC entrada projetada 624,91 / AV 2.388,23 / combinado 3.013,14.
 
-## Linha "A liberar bruto (painel ML)" (09/jun/2026)
-Novo campo por dia `entradas_ml_bruto` = líquido de taxas de (pending + released-
-hoje), **antes** de retenção/abate → bate 1:1 com o painel "a liberar" do ML
-(AV hoje 3.278 ≈ painel ~3.285). Acumulado em `slot["bruto_real"]` nos 2 loops reais
-(replace_all na linha do `net_real`); total `total_a_liberar_bruto_periodo` no resumo.
-ProvisaoCard mostra 2 linhas: **"A liberar bruto"** (= painel ML) e **"Entrada
-projetada"** (= bruto − retenção XC − ML já creditado no banco, alimenta o saldo).
-`entradas_ml_real`/`total_releases_reais_periodo` deixaram de ser "= painel ML" (são
-a entrada líquida projetada). Tipos em `lib/api.ts`.
+## Linha "A liberar (painel ML)" (09/jun/2026)
+Campo por dia `entradas_ml_bruto` (`slot["bruto_real"]`) + total
+`total_a_liberar_bruto_periodo`. ProvisaoCard mostra 2 linhas: **"A liberar"**
+(= painel ML "a liberar") e **"Entrada projetada"** (= alimenta o saldo, líq. de
+retenção/abate). `entradas_ml_real`/`total_releases_reais_periodo` deixaram de ser
+"= painel ML" (são a entrada líquida projetada). Tipos em `lib/api.ts`.
+
+**DEFINIÇÃO CORRETA (validada ao vivo 09/jun com saque do CFO):** "a liberar" do
+painel = **só PENDING** (retido, ainda não liberado), líquido de taxas **E da
+retenção 25%** (o ML já desconta o empréstimo antes de exibir o "a liberar" do
+XConnect). Acumula **`entrada` (= net − retenção), NÃO `net`**, e SÓ no loop dos
+pending — **released-de-hoje NÃO entra** (já virou "disponível"/sacável no painel; some
+quando o CFO saca). Validação 1:1: AV 597,15 e XC 226,45 = painel.
+- **Erro inicial (corrigido na mesma sessão):** 1ª versão somava pending+released e
+  usava `net` (sem retenção) → bruto superestimava o painel após qualquer
+  liberação/saque (AV mostrava 3.278 vs painel 597; XC 322,89 vs 226,45). O teste ao
+  vivo (saque MP→Inter das 2 empresas) expôs isso: released-de-hoje continua `released`
+  no nosso DB mesmo após sacado, então não pode entrar no "a liberar".
+- O **saldo/projeção não é afetado** por essa linha (é só display); os released-de-hoje
+  seguem na entrada projetada via fix (c) acima, com o abate evitando dupla contagem.
+- ⚠️ **`ml_ja_creditado_hoje` vem em valores REDONDOS manuais** (1.000/2.400/890/3.490)
+  porque o **reconcile do Inter está quebrado (certs mTLS faltando)** — sem reconcile
+  automático o abate fica aproximado e cada saque lançado redondo desalinha um pouco a
+  projeção. Priorizar baixar os certs do Inter (`certs/xconnect.crt`,`certs/aviation.crt`).
 
 Testes `tests/test_pending_releases.py` seguem 8/8 OK. Ver [[ecommerce_money_release_date]],
 [[ecommerce_mp_payouts]], [[ecommerce_provisao_model]], [[ecommerce-provisao-release-staleness]].
