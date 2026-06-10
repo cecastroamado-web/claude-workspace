@@ -47,5 +47,23 @@ Card `SicrediLoanCard.tsx` na página Fluxo de Caixa (acima do ProvisaoCard): to
 fechado + spread; 1ª parcela). Hooks `useSicrediLoan`/`useSaveSicrediLoan` (invalida
 `provisao`). Tipos/métodos em `lib/api.ts`.
 
+## Reserva de Renda Fixa (garantia) — rendimento a 96% do CDI (10/jun/2026)
+A RF que cobre a garantia do Sicredi = aplicação de **R$ 300k em 02/06/2026, conta
+"SICREDI X CONNECT"** (na planilha "INVESTIMENTO RENDA FIXA"). Rende **96% do CDI**.
+- **CDI do BCB**: `agent/bcb.py fetch_cdi_mensal` (série **4391**, CDI acumulado no mês).
+  Tabela `cdi_mensal`; o job `selic-sync` busca Selic (4390) **e** CDI (4391).
+- **Acúmulo** (`api.py _cdi_accrual_factor`): fator = Π meses (1 + 0,96×cdi_mês); mês de
+  início e mês corrente rateados por dias; **mês corrente vem PARCIAL do BCB → o
+  rendimento atualiza sozinho** a cada carga. Meses sem dado → último fechado.
+- **/api/overview** acumula SÓ as aplicações da conta **SICREDI** (a em garantia), desde
+  a DATA da planilha. ⚠️ **NÃO somar todas as linhas RF**: há **161 linhas** de churn
+  antigo na conta INTER (2024-25) que já zeraram (resgatadas) — somar tudo dava R$ 240k
+  de rendimento FALSO. Filtro `"SICREDI" in CONTA` isola a aplicação real.
+- Campos novos no overview: `rendimento_rf`, `saldo_rf_bruto` (=aplicado+rendimento),
+  `rf_pct_cdi`, `rf_data_aplicacao` (auto da planilha). `GET/POST /api/rf-config`
+  (pct_cdi override; data é auto). Card "Aplicado em Renda Fixa" mostra Aplicado /
+  Rendimento (96% CDI) / Bruto + "em garantia, bloqueada".
+- Validado 10/jun: 300k desde 02/06 = rendimento R$ 737 (8 dias), bruto R$ 300.737.
+
 Ver [[ecommerce_provisao_pontos_cegos]], [[ecommerce_cashflow_financiado]] (simulação de
 alavancagem Sicredi no /api/cashflow, separada disto).
