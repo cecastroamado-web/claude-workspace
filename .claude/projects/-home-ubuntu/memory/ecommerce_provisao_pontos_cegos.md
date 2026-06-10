@@ -88,9 +88,17 @@ gap-filler do mês fechado), **todos mês subsequente à apuração**:
 - **PIS/COFINS** XConnect → dia **25** · **ICMS** → dia **12** (antes eram 1 lump no
   dia 10; split preserva o total e residualiza cada tipo separado) · **DIFAL** → dia
   15 (inalterado) · **DAS** Aviation → dia **20** · **IRPJ/CSLL** → dia 30 trimestral.
-- ICMS XConnect = ICMS ML estimado (proxy mês anterior, residual) **+** ICMS Bling real
-  das NF-e (canais distintos, somam). ⚠️ o gap-filler do mês fechado NÃO inclui o Bling
-  real (pré-existente; só o in-loop inclui) — possível melhoria.
+- **ICMS XConnect = LÍQUIDO (débito − crédito) por `_calc_icms_net_month`**, que JÁ
+  inclui o ICMS Bling/Havan no débito. ⚠️ **NÃO somar `valor_icms` do Bling em separado**
+  — dobra o Havan (bug corrigido 10/jun: in-loop e gap-filler somavam o bruto do Bling
+  por cima do líquido → maio mostrava 27.514 líq + 29.436 bruto = 56.950; real é 27.514).
+- O in-loop usa o líquido REAL do próprio mês (`_calc_icms_net_month` do mês `_ym_loop`);
+  mês futuro sem NF → proxy do mês fechado. Antes usava o proxy de maio p/ todo mês.
+- **Exibição separada ML × Bling** (a pedido do CFO): 2 linhas no dia 12, "ICMS ML
+  XConnect" e "ICMS Bling XConnect", rateando o líquido proporcional ao débito de cada
+  canal (`_icms_bling_frac` = débito Bling ÷ débito total; crédito compartilhado é
+  rateado junto). Soma = líquido total. Deixa claro que o peso é Havan (maio: Bling
+  18.707 + ML 8.808; junho: Bling 17.231 + ML 1.471 — ML baixo confirma vendas fracas).
 
 **ADS — ciclo de faturamento REAL (fechamento/vencimento fixos) + janela móvel 10d:**
 - O ADS do ML **NÃO é mês calendário**. Ciclos reais (dias FIXOS, confirmados nos
