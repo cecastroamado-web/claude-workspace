@@ -82,5 +82,27 @@ quando o CFO saca). Validação 1:1: AV 597,15 e XC 226,45 = painel.
   automático o abate fica aproximado e cada saque lançado redondo desalinha um pouco a
   projeção. Priorizar baixar os certs do Inter (`certs/xconnect.crt`,`certs/aviation.crt`).
 
-Testes `tests/test_pending_releases.py` seguem 8/8 OK. Ver [[ecommerce_money_release_date]],
+## Vencimentos reais de impostos + ADS por empresa (10/jun/2026)
+Datas de vencimento na provisão (`api.py`, in-loop com `_tax_month`=mês seguinte +
+gap-filler do mês fechado), **todos mês subsequente à apuração**:
+- **PIS/COFINS** XConnect → dia **25** · **ICMS** → dia **12** (antes eram 1 lump no
+  dia 10; split preserva o total e residualiza cada tipo separado) · **DIFAL** → dia
+  15 (inalterado) · **DAS** Aviation → dia **20** · **IRPJ/CSLL** → dia 30 trimestral.
+- ICMS XConnect = ICMS ML estimado (proxy mês anterior, residual) **+** ICMS Bling real
+  das NF-e (canais distintos, somam). ⚠️ o gap-filler do mês fechado NÃO inclui o Bling
+  real (pré-existente; só o in-loop inclui) — possível melhoria.
+
+**ADS — janela móvel 10d + datas por empresa:**
+- Sync (`scheduler._run_ml_ads_sync`) busca gasto dos últimos 10 dias COMPLETOS por
+  campanha (`MercadoLivreClient.get_campaign_metrics_range`) → tabela `ml_ad_spend_rolling`
+  (company PK, cost, days). `ml_ad_spend` segue mensal (sem diário).
+- Provisão: bloco dedicado por empresa (`_ads_by_co` = rolling_daily/mtd_real/last_actual;
+  `_ADS_PAY_DAY = {XConnect:5, Aviation:25}`). **Vencimento = dia 05 (XC) / 25 (AV) do mês
+  SEGUINTE ao gasto** (arrears). Mês de gasto: corrente = real-até-hoje + média_10d ×
+  dias restantes; mês fechado = gasto REAL (vence neste mês, gap-filler); futuros =
+  média_10d × dias. Substituiu o "mês corrente ÷ dia" que inflava com promo no início
+  (Aviation "Liquida 6.6" → 31k). Validado: AV maio real 15.260 vence 25/jun; XC junho
+  proj. ~4.98k vence 05/jul.
+
+Testes `tests/` 307/307 OK (`test_pending_releases.py` 8/8). Ver [[ecommerce_ads_fix]], [[ecommerce_money_release_date]],
 [[ecommerce_mp_payouts]], [[ecommerce_provisao_model]], [[ecommerce-provisao-release-staleness]].
