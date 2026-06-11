@@ -24,6 +24,14 @@ ecommerce-agent: provisão de caixa (`/api/provisao`) migrada para **modelo SEM 
 
 **Validação vs painel "a liberar" do ML (mai/2026):** XConnect R$ 16.966 (painel 16.975, Δ R$8); Aviation R$ 25.655 (painel 25.954, ~1%). Reconciliação XConnect: net 24.310 − 25%×bruto 29.374 = 16.967. Lag real medido bem menor que o D+14 antigo: XConnect ~3,4d, Aviation ~8,2d (liberação amarrada à entrega + reputação MercadoLíder).
 
+**Cap de quitação (11/jun/2026):** a retenção 25% PARA quando o saldo devedor
+(`_EMPRESTIMO_VALOR_TOTAL` 246.028 − pago real da planilha "EMPRESTIMO"+"MERCADO LIVRE")
+é coberto. `_emp_ret_cap` lido ANTES dos loops de release, decrementado a cada retenção
+(pending, released-hoje, projeção). Antes retinha "para sempre" (sem efeito no horizonte
+de 60d pois quita só ~jan/2027, mas era inconsistente com o gráfico que já capava). Paridade
+provisão×gráfico confirmada: caixa líquido ML = 0,75×bruto − taxas nos dois (gráfico:
+receita_ml_est líq − loan_pgto 25%×bruto; provisão: líq − retenção). Ver [[ecommerce-provisao-grafico-paridade]].
+
 **Frontend:** `dashboard-ui/src/features/cashflow/ProvisaoCard.tsx` reescrito sem antecipação — banner "Liberação ML" mostra "A liberar (real)" = painel, separado da projeção; empréstimo mostra retenção+abatimento. Tipos novos em `lib/api.ts` (`entradas_ml_real/_proj`, `total_releases_reais_periodo`).
 
 **Alerta Telegram (jun/2026):** o job `check-provisao` (`scheduler.py:_run_check_provisao`, diário 08h) **ainda usava o modelo antigo de antecipação** (média diária + "Antecipável 3d @ 4,16%") e ignorava os releases reais — mostrava XConnect despencando p/ saldo negativo no dia 0 (ex.: -5.325) enquanto o dashboard mostrava +668. Reescrito p/ **chamar `get_provisao(empresa=, dias=30)` direto** (mesma função do endpoint; `_verify_token` Depends vira default não-usado quando chamado in-process) e formatar o bloco a partir da resposta: `saldo_atual_total` (banco + "MP a sacar"), `total_releases_reais_periodo` ("A liberar ML real"), projeção futura, médias, bloco empréstimo (se ativo) e a lista `alertas` (threshold amarelo R$ 20k). Fonte única de verdade = endpoint. `_notify` honrado p/ logar envio real.
