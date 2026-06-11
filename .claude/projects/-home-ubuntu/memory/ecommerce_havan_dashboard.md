@@ -29,6 +29,15 @@ Dashboard dedicado do canal Havan no `ecommerce-agent` (`agent/havan_scraper.py`
 2. **Receita Havan no fluxo de caixa** (`/api/cashflow`): campo `receita_havan_est` por mês + `havan_proj_total`. Conceito alinhado com CFO: "A Receber" já cobre NFs emitidas; projeta SÓ recompra futura (sell-out × atacado), começando após esgotar cobertura (estoque+pedidos), caixa em **entrega + 120d** (régua: faturamento → +15d agendamento CD → +120d). NÃO duplica A Receber.
 ⚠️ **Custo Cabo 12V 3m atualizado jun/2026:** compra ML de 2.500 un a **R$22,98** (fornecedor Simples Nacional → **0% de crédito de ICMS**, não os 4%). Versionado em `product_costs`: effective_from `2026-06-01` cost 22,98 / icms_credit_rate 0 (mantém 39,753/4% em 2000-01-01 p/ histórico). NF junho da Havan (NF 581) tem 1.000 desses. Impacto: 12V 3M resultado 7%→30%; canal 16%→19%.
 
+⚠️ **Confirmação manual de entrega no CD (11/jun/2026):** o "em trânsito" da conciliação é
+ESTIMADO por tempo (`_havan_em_transito_por_sku`: NF emitida nos últimos `_HAVAN_TRANSITO_DELAY_DAYS`
+=15d). Quando o lote é entregue ANTES (ex.: hoje), seguia contado como em-trânsito e distorcia o
+"a faturar" (= pedidos_abertos − em_trânsito). Fix: override manual `havan_entregue_ate`
+(scheduler_state) — NFs emitidas ATÉ essa data saem do trânsito. `POST /api/havan/entregue-ate`
+(CFO marca quando o lote chega; vazio limpa); controle "Marcar entregue" na seção Conciliação;
+`conciliacao.entregue_ate` exposto. NFs emitidas DEPOIS da data seguem na régua de 15d. Os
+pedidos_abertos novos vêm do scraper (06h ou sync manual).
+
 ⚠️ **Sync de itens de NF junho corrigido (jun/2026):** `order_items_detail` tinha só 1 dos 2 itens das NFs 581/582 (faltavam USB-C 5M 600 e Case 260). Re-sincronizado via `bling.get_nfe_details` (DELETE+reinsert das 3 NFs). **Join correto NF↔itens = `order_items_detail.bling_order_id = bling_nfe.bling_nfe_id`** (NÃO por valor — value-match falha/é frágil). Agora junho reconcilia exato; "em trânsito" = 3.210 un (12V3M 1000, Slim 850, USB-C 5M 600, Haste 500, Case 260). Ver [[ecommerce-havan-backlog-faturamento-transito]].
 
 ⚠️ **CMV do Case Havan = R$176,28 (88mm), NÃO 114,16 (66mm).** O Case da Havan é case 66mm montado com **imãs 88mm** (override component 121 = 4×R$31,76 = R$127,04; cost_override real da NF = R$176,28). A margem Havan lê o `cost_override` de `order_items_detail` (mesma fonte da aba rentabilidade) e mapeia o Case → "Case Injetado 88mm XConnect". Ver [[ecommerce-nfe-discount-override-descontos-contratuais-por-nf]]. **SEMPRE conferir overrides de custo (order_item_component_override / cost_override) antes de atribuir CMV de produto Havan.**
