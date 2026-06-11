@@ -24,6 +24,16 @@ ecommerce-agent: provisão de caixa (`/api/provisao`) migrada para **modelo SEM 
 
 **Validação vs painel "a liberar" do ML (mai/2026):** XConnect R$ 16.966 (painel 16.975, Δ R$8); Aviation R$ 25.655 (painel 25.954, ~1%). Reconciliação XConnect: net 24.310 − 25%×bruto 29.374 = 16.967. Lag real medido bem menor que o D+14 antigo: XConnect ~3,4d, Aviation ~8,2d (liberação amarrada à entrega + reputação MercadoLíder).
 
+**Saldo devedor ancorado no valor REAL do ML (11/jun/2026):** a estimativa pela planilha
+(246.028 − lançamentos "EMPRESTIMO/MERCADO LIVRE") DEFASA o saldo real do ML (a retenção
+25% é na fonte e o lançamento atrasa; ml_orders_sync só tem 60d). Override do CFO:
+`scheduler_state` chave `emprestimo_saldo_override` = {saldo, as_of} = valor lido no painel
+do ML. Helper `_emp_saldo_real()` (api.py): com override → ancora nele − pagamentos lançados
+APÓS `as_of`; sem → estima pela planilha. Usado no cap E no display. `GET/POST
+/api/emprestimo-ml-saldo`; banner do ProvisaoCard mostra Pago + Saldo devedor com botão
+"atualizar" inline. Valor real 11/jun: pago 104.162 / saldo 141.865 (total 246.028).
+O CFO reatualiza quando consulta o ML.
+
 **Cap de quitação (11/jun/2026):** a retenção 25% PARA quando o saldo devedor
 (`_EMPRESTIMO_VALOR_TOTAL` 246.028 − pago real da planilha "EMPRESTIMO"+"MERCADO LIVRE")
 é coberto. `_emp_ret_cap` lido ANTES dos loops de release, decrementado a cada retenção
