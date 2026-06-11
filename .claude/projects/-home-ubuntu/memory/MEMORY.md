@@ -240,3 +240,4 @@
 - Telegram streaming: sendMessage → message_id → editMessageText a cada 0.8s
 - Todas features com try/except fallback para comportamento original
 - [Empréstimo Sicredi na provisão](ecommerce_sicredi_emprestimo.md) — parcelas SAC + Selic mês a mês do BCB; RF em garantia bloqueada
+- [Paridade provisão × gráfico](ecommerce_provisao_grafico_paridade.md) — tudo na provisão precisa aparecer no gráfico do fluxo (CFO)
