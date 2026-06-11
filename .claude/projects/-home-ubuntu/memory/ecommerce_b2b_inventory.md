@@ -29,6 +29,13 @@ Fluxo: usuário lança **só produto + quantidade + data** nas abas Entradas/Sa�
 - **ESTACAO-DC-40KW-CCS2** (Estação DC 40kW 1 CCS2 MOD. C — cód. fornecedor 5000.045, NCM 8504.40.10) — 2 un, custo médio R$ 21.913,57 / venda R$ 56.553,00 / **margem 61,25%** (NFs 4232 16/03/2026 e 4388 30/04/2026)
 - **Totais:** estoque a custo R$ 75.915,64 / a venda R$ 201.592,55 / margem bruta consolidada 62,34%
 
+## Atualização 11/jun/2026 — variante Wallbox 40kW (NF 4455)
+NF DIGITALLI nº **4455** (emissão 28/05/2026, intra-RS, ICMS 17%, recebida via Telegram em `/home/ubuntu/nfs_entrada/20260611_152629_Nota Connect 28-05.pdf`). É uma **variante** do 40kW (produto distinto, cód. fornecedor **5000.010** ≠ 5000.045 do CCS2, custo bem menor) — confirmado pelo CFO como modelo diferente.
+- **SKU novo `ESTACAO-DC-40KW-WALLBOX`** ("Estação Wallbox DC 40kW 1 CCS2 MOD", NCM 8504.40.10, cód. fornecedor 5000.010) cadastrado em Parametros.
+- Entrada: 1 un, custo líquido **R$ 17.583,31** (= 18.906,85 − 2.268,88 ICMS + 945,34 IPI), nº série 01001073.
+- ⚠️ **Preço de venda = R$ 56.553 é PROVISÓRIO** (copiado do 40kW-CCS2 a pedido do CFO "só pra registrar"). **PENDENTE: definir o preço real do Wallbox** e alterar no Parametros.
+- A estrutura real do Parametros tem coluna **Preço Venda** entre Custo Médio e Estoque Mínimo (a lista de colunas acima omite ela).
+
 ## Snapshot retroativo aplicado
 Tabela `estoque_snapshots` em `data/ecommerce.db`: adicionado `tipo='b2b'`, `empresa='XConnect'` para datas 2026-03-31 (2 un, R$ 55.224,06) e 2026-04-30 (3 un, R$ 75.915,63). Sem alterar snapshots ML/imãs.
 
