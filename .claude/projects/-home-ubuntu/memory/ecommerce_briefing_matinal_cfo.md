@@ -21,6 +21,19 @@ seção "ESCOPO DECIDIDO". O roadmap "Bom dia, CFO" GERAL segue pendente.
 - **Frontend:** card produtosDetail ganhou 'Vel 7d/d' + 'Cob. 7d'; tabela sobreDetail usa cob7;
   tipos `HavanSobreEstoqueItem` em `lib/api.ts`.
 
+**Ajustes 12/jun (commits `332311e`):**
+- **Alerta ganhou coluna `nv`** = vendas novas desde a última coleta (Δ venda_30d entre as 2
+  últimas capturas — MESMO número do card "O que mudou" do painel). Job injeta `venda_novas` por
+  produto via `get_havan_last_two_captures`/`get_havan_capture_rows`. + total do dia no rodapé.
+- **Painel: cobertura nas DUAS lentes** — `Cob. 7d` (velocidade recente, base do alerta) E
+  `Cob. hist` (cobertura_meses 30d) lado a lado. Helper `cob7Prod()`/`fmtCob()` no index.tsx; nos
+  cards de produtos e sobre-estoque (visíveis) + modais produtos/sobre-estoque/estoque/ruptura. O
+  painel estava misturando as duas bases → parecia que o alerta "não batia".
+- **Fuso captured_date (commit `a5baf24`)**: era UTC → coleta noturna virava captura do dia
+  seguinte. Agora `date('now','-3 hours')` (BRT). Ver detalhe no corpo abaixo.
+- **Coleta 06h pode dar TIMEOUT** (portal Havan lento): há retry 06→07→08h (`_loop_havan_sync`).
+  Em 12/jun 06h deu timeout, 07h coletou OK — comportamento esperado, não é falha.
+
 ---
 
 PLANEJADO em 11/jun/2026 (a pedido do CFO).
