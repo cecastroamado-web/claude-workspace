@@ -26,7 +26,11 @@ agrega num digest matinal. ✅=já existe (reusar fonte)  🆕=novo.
    entregar), a faturar (fontes já no /api/havan) ✅; atrasados se houver 🆕; divergência de
    conciliação que peça ação 🆕.
 3. **VENDAS (pulso)** — faturamento ontem (ML+Bling+NFS-e) vs média 7d/30d % ✅; mês corrente
-   run-rate vs mês anterior/meta 🆕; nº pedidos/ticket ✅.
+   run-rate vs mês anterior/meta 🆕; nº pedidos/ticket ✅. **Projeção de fechamento do mês pela
+   velocidade dos últimos 7 dias** 🆕 (pedido do CFO, explícito): mostrar **(a) quanto já vendeu
+   no mês (MTD, R$ e qtd)** + **(b) projeção do mês = MTD + velocidade 7d (R$/dia e qtd/dia) ×
+   dias restantes**, total e por item; comparar c/ mês anterior e % de evolução. Mesma janela 7d
+   do quadro por item.
 3b. **QUADRO POR ITEM (D-1)** 🆕 — peça central pedida pelo CFO (campo a campo). UMA linha por
    SKU, com: **vendas do dia anterior (qtd + R$)** · **média 7d × média 30d (qtd/dia) c/ seta ▲▼
    de aceleração/desaceleração** (item esquentando 7d≫30d / esfriando 7d≪30d) · **estoque atual** ·
