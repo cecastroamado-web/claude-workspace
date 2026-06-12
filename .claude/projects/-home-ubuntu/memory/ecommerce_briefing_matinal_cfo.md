@@ -26,11 +26,20 @@ agrega num digest matinal. ✅=já existe (reusar fonte)  🆕=novo.
    entregar), a faturar (fontes já no /api/havan) ✅; atrasados se houver 🆕; divergência de
    conciliação que peça ação 🆕.
 3. **VENDAS (pulso)** — faturamento ontem (ML+Bling+NFS-e) vs média 7d/30d % ✅; mês corrente
-   run-rate vs mês anterior/meta 🆕; nº pedidos/ticket ✅. **Vendas POR ITEM/SKU do dia anterior
-   (qtd + R$), top N + cauda** 🆕 (pedido explícito do CFO — aproveita a coleta 06h; fonte
-   `ml_orders_sync` + itens Bling; mostra o que girou e o que NÃO vendeu nada vs média).
+   run-rate vs mês anterior/meta 🆕; nº pedidos/ticket ✅.
+3b. **QUADRO POR ITEM (D-1)** 🆕 — peça central pedida pelo CFO (campo a campo). UMA linha por
+   SKU, com: **vendas do dia anterior (qtd + R$)** · **média 7d × média 30d (qtd/dia) c/ seta ▲▼
+   de aceleração/desaceleração** (item esquentando 7d≫30d / esfriando 7d≪30d) · **estoque atual** ·
+   **ruptura (status: zerado/negativo/dias de cobertura)** · **pedidos em aberto** · **valor a
+   faturar** (= pedidos abertos − em-trânsito × atacado, p/ Havan). Visão UNIFICADA ML + Havan +
+   B2B. Ordenar por relevância (giro × R$); destacar o que não vendeu nada vs média e o que está
+   em ruptura. Fontes já existentes: `ml_orders_sync` + itens Bling (vendas D-1), médias como a
+   sugestão de pedido de imãs ([[ecommerce-ima-sugestao-pedido]]), snapshot Havan
+   (pedidos_abertos/em_transito/a-faturar — ver [[ecommerce-havan-backlog-faturamento-transito]]),
+   estoque por item. Provavelmente exige consolidar SKUs ML×Havan num catálogo comum.
 4. **OPERAÇÃO/RUPTURA** — ruptura ML (parados/sem estoque) ✅; ruptura Havan na ponta ✅; runway de
    imãs + "pedir agora?" considerando lead time ✅(sugestão de pedido); catálogo ML pausado ✅.
+   (Parte da ruptura já fica visível no Quadro por item acima; aqui é a visão consolidada/acionável.)
 5. **OBRIGAÇÕES/IMPOSTOS** — impostos a recolher na semana (DAS/DARF/ICMS/DIFAL) c/ vencimento 🆕;
    parcelas de empréstimo do mês (Sicredi/ML) 🆕.
 6. **SAÚDE DE DADOS** — falha de sync (NF-e integrity ✅, token Drive ✅, portal Havan ✅);
