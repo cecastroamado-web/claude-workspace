@@ -48,6 +48,28 @@ custo diferente — ex.: DIFAL de compra ≠ DIFAL de venda). Se confirmado, des
 resultado op/líquido fica SUBESTIMADO. Também auditar o CMV (compute_profitability não pode
 embutir comissão/frete/imposto, senão dobra com as deduções) e a receita.
 
+**AUDITORIA — STATUS (12/jun):**
+- ✅ **CORRIGIDO (commit no submódulo): dupla contagem de ANÚNCIOS ML.** O ADS entrava 2× no DRE:
+  `ads_ml` (ml_ad_spend, API, competência) + conta MARKETING do Sheets (favorecido "Mercado
+  Livre", pagamento da fatura). Decisão CFO: manter `ads_ml`, excluir o do Sheets. Helper
+  `_is_anuncio_ml_sheets()` (api.py) detecta por FAVORECIDO=Mercado Livre na conta MARKETING
+  (robusto a obs vazia — Aviation lança sem 'ANUNCIOS'). **Impacto maio XConnect: resultado op
+  61.343→91.918 (15,8%→23,7%); líquido 18.207→48.782.** Sistemático em jan/fev/mar/mai.
+- ⏳ **IMPOSTOS no Sheets = imposto de IMPORTAÇÃO de imãs** ("600 IMÃS - AÉREO - FORNECEDOR
+  CRISTIANO", R$ 3.814 mai / R$ 14.806 ano). NÃO é tributo de venda. É custo de insumo classificado
+  como despesa op — ver se já está embutido no custo do imã (CMV) → dobra; se não, é custo legítimo
+  mas mal-posicionado.
+- ⏳ **DIFAL R$ 2.630 (Sheets, só maio, sem descrição)** — confirmar se é DIFAL de venda (dobra com
+  as deduções de 10.478) ou de compra.
+- 🔴 **RESULTADO LÍQUIDO distorcido por "abaixo da linha":** XConnect 2026 tem resultado op +252.979
+  mas líquido −159.957 porque a DRE subtrai, abaixo da linha, **DIVIDENDOS R$ 311.553** + **CAPEX
+  R$ 40.330** + **PRO-LABORE R$ 230.000**. Contabilmente DIVIDENDOS (distribuição de lucro) e CAPEX
+  (investimento) NÃO são despesa do resultado — não deveriam reduzir o líquido. Pró-labore é despesa
+  mas normalmente fica ACIMA da linha (no EBITDA). Modelagem a alinhar com o CFO: o líquido "real"
+  antes de distribuição é positivo. (`abaixo_linha` no JSON vem {} mas o valor É subtraído — checar.)
+- ⏳ Verificar se a dupla contagem de ADS existe em OUTRAS telas (overview/cashflow somam ml_ad_spend
+  + despesas do Sheets?).
+
 **FILA DE TAREFAS DO CFO (12/jun, NESTA ORDEM):**
 1. **(atual) Auditoria DRE / resultado operacional** — confirmar e corrigir as duplas contagens.
 2. **Cenários de pedido de imãs** — hoje o "pior caso" usa Pico de vendas ML + MAIOR mês Havan;
