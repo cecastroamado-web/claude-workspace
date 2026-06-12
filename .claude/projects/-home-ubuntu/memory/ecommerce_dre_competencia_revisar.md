@@ -61,12 +61,13 @@ embutir comissão/frete/imposto, senão dobra com as deduções) e a receita.
   mas mal-posicionado.
 - ⏳ **DIFAL R$ 2.630 (Sheets, só maio, sem descrição)** — confirmar se é DIFAL de venda (dobra com
   as deduções de 10.478) ou de compra.
-- 🔴 **RESULTADO LÍQUIDO distorcido por "abaixo da linha":** XConnect 2026 tem resultado op +252.979
-  mas líquido −159.957 porque a DRE subtrai, abaixo da linha, **DIVIDENDOS R$ 311.553** + **CAPEX
-  R$ 40.330** + **PRO-LABORE R$ 230.000**. Contabilmente DIVIDENDOS (distribuição de lucro) e CAPEX
-  (investimento) NÃO são despesa do resultado — não deveriam reduzir o líquido. Pró-labore é despesa
-  mas normalmente fica ACIMA da linha (no EBITDA). Modelagem a alinhar com o CFO: o líquido "real"
-  antes de distribuição é positivo. (`abaixo_linha` no JSON vem {} mas o valor É subtraído — checar.)
+- ✅ **CORRIGIDO (padrão contábil, decisão CFO): "abaixo da linha".** Pró-labore → despesa op
+  (entra no EBITDA); DIVIDENDOS e CAPEX NÃO reduzem mais o líquido (viram "Destinação do Lucro",
+  informativo); `resultado_liquido = resultado_operacional`. Aplicado no cálculo principal,
+  consolidado e CHART MENSAL (que também passou a excluir anúncios + incluir pró-labore). Front DRE
+  reestruturado. **Impacto XConnect 2026: líquido −159.957 → +172.979** (o "prejuízo" era artefato
+  de subtrair dividendos R$ 311k + pró-labore + capex). Maio: op 91.918→81.918 (pró-labore 10k
+  agora é despesa), líquido = op.
 - ⏳ Verificar se a dupla contagem de ADS existe em OUTRAS telas (overview/cashflow somam ml_ad_spend
   + despesas do Sheets?).
 
