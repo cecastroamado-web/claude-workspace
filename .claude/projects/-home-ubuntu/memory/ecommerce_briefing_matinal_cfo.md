@@ -7,7 +7,23 @@ metadata:
   originSessionId: 5c7eb85e-fc5e-4fc1-80b9-ec8a21e0ed02
 ---
 
-PLANEJADO em 11/jun/2026 (a pedido do CFO), **ainda NÃO implementado**.
+**IMPLEMENTADO 11/jun/2026** (commit `7b26022` no ecommerce-agent): alerta Havan dedicado +
+sobre-estoque por velocidade 7d + coluna vel 7d no card de produtos. Detalhes técnicos abaixo na
+seção "ESCOPO DECIDIDO". O roadmap "Bom dia, CFO" GERAL segue pendente.
+
+- **Alerta:** `build_havan_briefing_text(snap)` em `agent/api.py` (recebe snapshot enriquecido) +
+  job `_run_havan_briefing` no `scheduler.py`, chamado no fim de `_run_havan_sync` (06h, 1×/dia,
+  guard `havan_briefing_last_sent`). Bloco monoespaçado: por item vel 7d/dia ▲▼, proj mês, estoque,
+  cob7, a faturar; totais un + R$ atacado; flags ⚠️cob baixa / 📦sobre-estoque / 💤sem giro.
+- **Sobre-estoque** (`_havan_overstock`): `cobertura_alvo=4.0`, cobertura pela `_havan_velocidade_mensal`
+  (7d, fallback 30d, senão 'sem_giro'); nível por cob7 (>6 alto, >4 médio); campos novos no item
+  `cobertura_7d/janela_velocidade/venda_7d` + retorno `sem_giro/qtd_sem_giro`.
+- **Frontend:** card produtosDetail ganhou 'Vel 7d/d' + 'Cob. 7d'; tabela sobreDetail usa cob7;
+  tipos `HavanSobreEstoqueItem` em `lib/api.ts`.
+
+---
+
+PLANEJADO em 11/jun/2026 (a pedido do CFO).
 
 **ESCOPO DECIDIDO (11/jun): começar por um ALERTA DEDICADO SÓ DA HAVAN**, NOVO e SEPARADO dos
 alertas existentes (não misturar no digest geral). Entrega: **mensagem Telegram (texto/tabela)**,
@@ -27,6 +43,12 @@ pedidos_abertos, cobertura_meses, ruptura, recebido_mensais, receita_atacado_30d
   mobile → usar layout COMPACTO (2 linhas por item ou colunas reduzidas).
 - Padrão técnico: novo job no `scheduler.py` (ex. `_run_havan_briefing`), legacy Markdown sem
   escapes, `_notify` bool → só marca scheduler_state se True, catch-up no restart.
+
+**DECISÕES do CFO (11/jun):** (1) cobertura E sobre-estoque usam **velocidade 7d** (estoque ÷
+(venda_7d/7×30); fallback venda_30d se venda_7d=0; venda 0 nas duas janelas = "sem giro", categoria
+à parte, não sobre-estoque por excesso). (2) Projeção do mês em **unidades + R$ atacado faturável**
+(qtd × preco_atacado). Layout do alerta: bloco monoespaçado compacto p/ caber no celular, ▲▼ de
+aceleração, ⚠️ cobertura baixa / 📦 sobre-estoque / 💤 sem giro.
 
 **PEDIDOS RELACIONADOS (11/jun) — mesma base de velocidade 7d:**
 2. **Reformular SOBRE-ESTOQUE na Havan** (`_havan_overstock` api.py:8477): hoje a cobertura usa
