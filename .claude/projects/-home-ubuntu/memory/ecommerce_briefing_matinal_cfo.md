@@ -7,11 +7,47 @@ metadata:
   originSessionId: 5c7eb85e-fc5e-4fc1-80b9-ec8a21e0ed02
 ---
 
-PLANEJADO em 11/jun/2026 (a pedido do CFO), **ainda NÃO implementado**. Objetivo: consolidar num
-único "Bom dia, CFO" no Telegram, disparado ~06h30 (após a coleta das 06h: sync bancário Inter +
-havan-sync + NF-e Bling 06h30), o que importa na 1ª hora. Princípio: **uma mensagem**, de cima
-(dinheiro hoje) p/ baixo (tendência); **suprime seção sem sinal** (não polui); cada linha acionável.
-Crítico (saldo projetado < mínimo, atraso Havan grande, falha de coleta) também vira push imediato.
+PLANEJADO em 11/jun/2026 (a pedido do CFO), **ainda NÃO implementado**.
+
+**ESCOPO DECIDIDO (11/jun): começar por um ALERTA DEDICADO SÓ DA HAVAN**, NOVO e SEPARADO dos
+alertas existentes (não misturar no digest geral). Entrega: **mensagem Telegram (texto/tabela)**,
+disparada logo após o `havan-sync` das 06h (a coleta que alimenta o snapshot Havan). As demais
+seções do "Bom dia, CFO" abaixo ficam como roadmap futuro. O alerta Havan usa SÓ o snapshot Havan
+(`havan_snapshot`) — campos por produto já disponíveis: `produto, sku, preco(varejo), preco_atacado,
+vendas_mensais{MM/AAAA}, total_periodo, venda_7d, venda_30d, estoque, estoque_previsto,
+pedidos_abertos, cobertura_meses, ruptura, recebido_mensais, receita_atacado_30d` + `em_transito_qtd`
+(computado no enriquecimento). Conteúdo do alerta Havan (quadro por item + projeção):
+- **Por item:** venda_7d (vel/dia) × venda_30d (vel/dia) c/ ▲▼; **MTD (vendas_mensais do mês)**;
+  **projeção do mês = MTD + vel_7d × dias restantes**; estoque + cobertura_meses; ruptura;
+  pedidos_abertos; **a faturar = (pedidos_abertos − em_transito) × atacado** (R$).
+- **Totais:** MTD, projeção do mês, valor total a faturar.
+- ⚠️ CAVEAT a alinhar: Havan NÃO tem "venda do dia anterior" granular (portal atualiza ~1×/dia,
+  dá acumulados) → o pulso é venda_7d, não D-1. Projeção em UNIDADES (sell-out); definir se quer
+  também R$ (atacado faturável vs varejo sell-out). Tabela larga (~90 chars) NÃO cabe no Telegram
+  mobile → usar layout COMPACTO (2 linhas por item ou colunas reduzidas).
+- Padrão técnico: novo job no `scheduler.py` (ex. `_run_havan_briefing`), legacy Markdown sem
+  escapes, `_notify` bool → só marca scheduler_state se True, catch-up no restart.
+
+**PEDIDOS RELACIONADOS (11/jun) — mesma base de velocidade 7d:**
+2. **Reformular SOBRE-ESTOQUE na Havan** (`_havan_overstock` api.py:8477): hoje a cobertura usa
+   `venda_30d`/`cobertura_meses` (histórico) e ignora a aceleração recente → FALSO POSITIVO em item
+   que esquentou nos últimos 7d. Caso real (snapshot 11/jun): **SUPORTE CASE PLÁSTICO C/ÍMÃ** marcado
+   sobre-estoque (cob30=6,0m) mas vel 7d (8/d, ▲ vs 4,6/d) dá cob real **3,4m** → não é sobre-estoque.
+   Correção: **cobertura efetiva = estoque ÷ (max(vel_7d, vel_30d) × 30)** (a janela mais rápida =
+   menos cobertura = conservador contra falso positivo); e/ou **excluir do sobre-estoque quem acelera**
+   (vel_7d > vel_30d). Sobre-estoque GENUÍNO hoje (alto nas 2 janelas): Cabo 12V 3M (~10m), Slim Pro
+   (~17m), Suporte Fixo Haste (~11m). Afeta o card do dashboard E o futuro alerta. Cabos USB-C 5M e
+   Painel Mini têm venda 0 → cobertura ∞, tratar à parte (item morto ≠ sobre-estoque por excesso).
+3. **Card "Produtos — vendas, estoque e cobertura"** (dashboard Havan): adicionar coluna de
+   **velocidade de venda 7d** (qtd/dia) ao lado de vendas/estoque/cobertura, p/ o CFO ver o ritmo
+   recente vs a cobertura. Mesma fonte `venda_7d` do snapshot.
+
+---
+
+ROADMAP FUTURO — "Bom dia, CFO" GERAL (separado, depois): consolidar num único digest ~06h30 (após
+coleta 06h: sync bancário Inter + havan-sync + NF-e Bling 06h30) o que importa na 1ª hora. Princípio:
+**uma mensagem**, de cima (dinheiro hoje) p/ baixo (tendência); **suprime seção sem sinal**; cada
+linha acionável. Crítico (saldo projetado < mínimo, atraso Havan grande, falha de coleta) vira push.
 
 Hoje os alertas existem mas ESPALHADOS (saldo 10h, a-vencer 07h45, vendas 09h, ruptura no havan-sync
 06h, etc.) — ver [[Alertas CFO ecommerce-agent — jobs do scheduler]]. A proposta NÃO remove os jobs;
