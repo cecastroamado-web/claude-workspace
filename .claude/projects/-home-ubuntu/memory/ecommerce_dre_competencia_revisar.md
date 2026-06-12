@@ -31,6 +31,34 @@ Surgiu o ponto-chave de competência do CFO:
   batem mês a mês** — ex.: maio RS, sistema estima crédito ~R$ 10,7k pela venda, fiscal real
   ~R$ 9,8k. O **débito** (ICMS das saídas) bate, é o **crédito** que diverge por timing.
 
+**ACHADOS DA 1ª PASSADA (12/jun, DRE maio/2026 XConnect via `/api/dre`):** resultado op
+R$ 61.343 (15,8%), líquido R$ 18.206. A DRE (`get_dre` em api.py:18814) monta:
+receita − deduções(comissão+frete+DIFAL) − CMV(compute_profitability) − despesas_op(Google
+Sheets + ADS) − tributos − abaixo da linha. **A dupla contagem está nas DESPESAS_OP do Sheets:**
+`CATEGORIAS_EXCLUIR_DRE` (api.py:205) só remove INSUMOS/COMISSÕES/FRETE/ICMS, mas o Sheets traz
+categorias que JÁ estão em outras linhas:
+- **DIFAL** (Sheets R$ 2.630,61) ↔ DIFAL já nas deduções (R$ 10.478 de ml_nfe) → provável dobra.
+- **IMPOSTOS** (Sheets R$ 3.814,42) ↔ tributos já calculados (PIS/COFINS/ICMS/IRPJ/CSLL R$ 51.570).
+- **MARKETING** (Sheets R$ 31.424,89) ↔ ADS ML já somado à parte (R$ 15.047) → ver se o ADS está
+  embutido no MARKETING do Sheets.
+- **TARIFAS ENVIO FULL** (493,97) / **TARIFAS AFILIADOS** (693,74) / **DESPESAS COM VENDAS**
+  (5.335,34) ↔ podem ser frete/comissão já nas deduções.
+VALIDAR caso a caso olhando os lançamentos reais do Sheets (categoria pode ter nome igual mas
+custo diferente — ex.: DIFAL de compra ≠ DIFAL de venda). Se confirmado, despesas inflam e o
+resultado op/líquido fica SUBESTIMADO. Também auditar o CMV (compute_profitability não pode
+embutir comissão/frete/imposto, senão dobra com as deduções) e a receita.
+
+**FILA DE TAREFAS DO CFO (12/jun, NESTA ORDEM):**
+1. **(atual) Auditoria DRE / resultado operacional** — confirmar e corrigir as duplas contagens.
+2. **Cenários de pedido de imãs** — hoje o "pior caso" usa Pico de vendas ML + MAIOR mês Havan;
+   como o melhor mês Havan tem pouco histórico, trocar a métrica Havan para **projeção de 30 dias
+   pela velocidade de vendas de 7 dias** (consistente com o alerta/cobertura 7d). Ver
+   [[ecommerce-ima-sugestao-pedido]].
+3. **Projetar pedidos em ABERTO da Havan** no gráfico de Fluxo de Caixa e na Provisão de Caixa —
+   desenhar como (timing de faturamento + entrega+120d). Ainda a conceber. Ver
+   [[ecommerce-havan-backlog-faturamento-transito]] (já temos "a faturar" = pedidos_abertos −
+   em_transito) e [[ecommerce-provisao-pontos-cegos]].
+
 **O que revisar:** se a DRE do ecommerce reflete competência de VENDA ou de ENTRADA para
 CMV/insumos/créditos de imposto, e se isso precisa ser alinhado ao regime contábil (ou exibido nas
 duas óticas, como fizemos com a cobertura 7d × histórica no painel Havan). Confirmar com o CFO
