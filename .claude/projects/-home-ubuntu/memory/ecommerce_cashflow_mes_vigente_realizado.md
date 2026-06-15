@@ -84,5 +84,14 @@ do CFO de que o indicador pode não fazer sentido — provavelmente ligado aos m
 vigente (mistura realizado/estimativa) e à base do histórico (média 3m vs ritmo real). Conferir a
 fórmula, a base (3m vs mês fechado) e se reflete o burn real (despesas − receitas recorrentes).
 
+## ✅ INVESTIGAÇÃO FECHADA (15/jun) — mês corrente: dupla subtração só em IMPOSTOS e DIVIDENDOS
+Auditoria read-only de `get_cashflow` (modelo é **aditivo sobre saldo_real**, não "mês cheio por cima"):
+- **CMV — LIMPO (refuta suspeita anterior).** `_base_payment_schedule`: 1º pagamento = `now + next_order_days + 30/60d` → cai em **julho**, nunca no mês corrente (api.py ~4705-4718). CMV imãs em datas fixas (ago/mar-2027) e gated `enabled=False`. NÃO subtrai 2× no mês vigente.
+- **ADS — LIMPO.** `_ads_invoice_schedule` só pega faturas `vencimento ≥ hoje`; gasto real até ontem + média×dias restantes. Vencido já está no saldo de partida. Prorrateado correto.
+- **IMPOSTOS — dupla subtração CONFIRMADA (não estrutural).** Estimativa CHEIA do mês corrente (base = mês anterior fechado) só é suprimida se o contador lançar o real como linha **PENDENTE** (`_tax_overrides`). Imposto já **PAGO** no mês (saiu de pendentes, já rebaixou saldo_real) NÃO tem override → estimativa cheia continua subtraindo → 2×. Exceção correta: DIFAL usa residual. Impacto: pessimista em dezenas de milhares/mês (ex.: ICMS RS ~R$27k).
+- **DIVIDENDOS — não reconciliado (confirma item 1 acima).** Mês corrente sempre re-modela `min(80%×excesso;120k)` sem ler o já-distribuído no mês → saída modelada adicional à já-paga.
+- **Direção:** projeção do saldo do mês corrente fica **PESSIMISTA**.
+- **Fix recomendado (não implementado):** aplicar a lógica residual do DIFAL aos demais impostos (subtrair já-pago efetivado por tipo, projetar `max(0, cheia − já_pago)`) + reconciliar dividendo (`max(0, modelado − já_pago)`, helper de dividendo efetivado já existe no overview ~api.py:1906-1909). NÃO tocar CMV/ADS.
+
 Relacionado: [[ecommerce-dre-competencia-revisar]] (auditoria DRE em curso),
 [[ecommerce-cashflow-financiado]], [[ecommerce-sicredi-emprestimo]].

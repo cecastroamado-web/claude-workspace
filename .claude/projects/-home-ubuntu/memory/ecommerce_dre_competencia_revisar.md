@@ -498,3 +498,19 @@ da API — mas em meses de cobertura PARCIAL (ex.: Dez/2025 API R$3.108 vs Sheet
 - 🟢 **4 CMV estimados reais** (mercadoria pré-2026, fora de 2026). Investigar quais.
 - 🟢 **cost_ref_date divergente** profitability(01/01) vs DRE(31/12) → CMV difere ~62k entre os dois
   endpoints (DRE internamente consistente). Alinhar se quiser que batam exatamente.
+
+## ✅ VEREDITO CUSTO EM DOBRO (15/jun) — a suspeita NÃO se confirma no resultado operacional
+Auditoria read-only de `get_dre` (api.py ~19855-20400). **NÃO há dupla contagem de CMV/INSUMOS.**
+- CMV entra UMA vez, só via `compute_profitability` (api.py ~20136-20150) — regime de competência, custo por pedido. Não há fallback de CMV via Sheets dentro do DRE.
+- INSUMOS (saída de caixa da COMPRA) é EXCLUÍDA do opex: `CATEGORIAS_EXCLUIR_DRE_SEMPRE_NORM = {INSUMOS, ICMS}` (api.py:216), aplicada no laço de despesas (`continue` em ~20290). É o mecanismo anti-dobra.
+- Números confirmam: INSUMOS pago/ano (422k/2,3M/2,0M) NÃO aparece no opex do DRE em nenhum ano; CMV no DRE é linha separada (264k/1,85M/1,37M). INSUMOS (caixa, compra) ≠ CMV (competência, venda) — magnitudes diferentes por timing de estoque, o que é correto.
+- A reposição de corpos/imãs como saída de caixa é do **Fluxo de Caixa** (regime caixa), módulo separado — não toca o resultado operacional do DRE.
+- **A dobra que EXISTIA e já foi corrigida** era nas DESPESAS_OP do Sheets (DIFAL/IMPOSTOS/MARKETING dobrando deduções/tributos/ADS) — tratada nos commits de "fix dupla contagem". O CMV/insumo (suspeita central do CFO) está limpo.
+
+## ✅ B2B 2026 CMV ~55% (investigado 15/jun) — REAL, não bug. Causa: HAVAN entrou no B2B
+Reproduzido via `compute_profitability` (`_source='bling_manual'`), todos `cmv_source='real'` (sem SKU vazio/NaN/cross-join/comissão no CMV):
+- 2025: 264 pedidos, receita R$ 1,23M, CMV 24,6% (mix premium ML, ticket pequeno, margem alta).
+- 2026: 59 pedidos, receita R$ 1,21M, CMV 57,5%. **HAVAN = 9 NFs, R$ 966k (80% da receita B2B), CMV 61,8%.** B2B avulso (50 ped., R$242k) segue saudável a ~40% CMV.
+- Havan ~62% é compressão REAL de margem (atacado: cabos/suportes plásticos a preço baixo — Case c/ imãs 295/114, cabo USB-C 50/32, etc.). Custos versionados corretos (China 2026).
+- Desconto contratual Havan (NF 561 override) NÃO infla o CMV% — denominador do summary é receita BRUTA, não líquida.
+- **Recomendação (não implementada):** segmentar o canal B2B em "Havan" vs "B2B avulso" no dashboard, senão a Havan arrasta a margem agregada e esconde que o avulso continua ~40%.

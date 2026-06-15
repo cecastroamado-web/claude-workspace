@@ -73,6 +73,25 @@ recebido hoje, custo da antecipação, resultado com vs sem. 1,8%/121d ≈ 6,9% 
 Simulação de Pedido inclui a seção "Antecipação do recebível"** quando ligada (HavanSimPdfBody ganhou
 antecipar/antecip_taxa_am/antecip_dias; `build_havan_simulacao_pdf` renderiza KPIs+tabela).
 
+## Prazo de pagamento dos insumos das OCs Havan (decisão CFO 15/jun/2026)
+`_havan_oc_produto_econ` passou a separar **cabo / ventosa / corpo** (antes cabo+ventosa juntos em
+"avista"). Prazos em `_havan_aberto_cmv_por_mes` (compra ~30d antes da entrega = `pd`):
+- **Cabos**: 100% à vista (`pd`).
+- **Ventosas**: 50% à vista (`pd`) + saldo 50% em 30/60d da compra (25% `pd+30`, 25% `pd+60`).
+- **Bases dos cases (fornecedor Gedeval = bucket `corpo`, + demais produzidos)**: **120 dias do
+  faturamento ≈ entrega → `entrega+120d`** (alinha com o recebível Havan de ~121d). Antes era 50% +30 / 50% +60.
+Total do CMV não muda (R$ 341.673 nas OCs atuais), só a distribuição mensal (bases pulam p/ out–dez).
+Textos do modal/PDF atualizados; detalhe expõe cmv_avista (= cabos+ventosas, rotulado "acessórios") e
+cmv_corpo ("bases"). Imposto inalterado (usa só o crédito de ICMS).
+
+## Fluxo de caixa da operação no tempo (mês a mês) no detalhe (15/jun/2026)
+`/api/havan/aberto-detalhe` ganhou **`fluxo_mensal`**: por mês, recebimento Havan (entrada, no
+data_recebimento_est), insumos (saída, mesmo `_havan_aberto_cmv_por_mes`), impostos (saída,
+`_havan_aberto_impostos_por_mes`), líquido do mês e **acumulado** (caixa imobilizado até a Havan pagar).
+Mostra o desencaixe REAL no tempo, não só o líquido por OC. Modal (ProvisaoCard) tem tabela "📅 Desencaixe
+da operação — mês a mês"; PDF tem seção idem. Validado 15/jun: fundo −R$316.535 em set/26, fecha
++R$368.716 (= líquido total) em dez/26 com os recebíveis.
+
 ## Card detalhe maior + PDF do desencaixe + antecipação das OCs no FLUXO (15/jun/2026)
 - Modal "Havan a faturar" (ProvisaoCard) expandido p/ ~96vw×92vh + **botão "📄 PDF do desencaixe"**
   (`GET /api/havan/aberto-detalhe/pdf` → `build_havan_aberto_pdf` no havan_report.py; KPIs receita/insumos/
