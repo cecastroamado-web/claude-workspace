@@ -1,6 +1,6 @@
 ---
 name: ecommerce_havan_backlog_faturamento_transito
-description: "Em-trânsito Havan: agregado por mês (6127d17) + POR PRODUTO em itens (7ad4de9, via havan_nfe_items + regra de data). Caveat: snapshot recebido SUBCONTA"
+description: "Havan a faturar: em-trânsito (6127d17/7ad4de9, caveat snapshot SUBCONTA) + card detalhe/desencaixe mês a mês com lançamentos (insumos+impostos por OC) + antecipação de OCs (modal e painel de fluxo) + PDFs"
 metadata: 
   node_type: memory
   type: project
@@ -108,3 +108,30 @@ da operação — mês a mês"; PDF tem seção idem. Validado 15/jun: fundo −
   ⚠️ Diferente do `antecipa_havan` existente, que antecipa as FATURAS JÁ EMITIDAS (status A RECEBER) p/ hoje.
   Toggle próprio "Antecipar OCs Havan a faturar (na entrega)" no cashflow, vale nos 2 modos. Validado
   15/jun: 8 OCs, bruto R$832.080, desconto R$57.768,50 (6,94%, 121d), líquido R$774.311,50.
+
+## Lançamentos como fonte única + detalhe expansível + PDF linha a linha (15/jun/2026)
+- **Lançamentos individuais = fonte única**: `_havan_aberto_cmv_lancamentos` e `_havan_aberto_impostos_
+  lancamentos` (api.py) emitem cada saída com OC, vencimento e **regra de prazo**; os `_por_mes` AGREGAM
+  a partir deles (cashflow inalterado, sem risco de divergir). `/api/havan/aberto-detalhe` anexa a cada
+  mês `insumos_det`/`impostos_det`/`recebimento_det`.
+- **Modal**: cada mês do "Desencaixe mês a mês" é **clicável/expansível** → mostra os lançamentos (tipo,
+  OC, item/componente, vencimento, regra, valor) p/ conferir o prazo.
+- **PDF do desencaixe** (`build_havan_aberto_pdf`): seção "Lançamentos — linha a linha" ordenada por
+  vencimento. ⚠️ Fix de layout (commit série d7795ab): tabela única com 59 linhas era 1 imagem mais alta
+  que a página → transbordava/sobrepunha; agora **quebra em blocos de 26 linhas** (1 imagem/página).
+
+## Seletor de OCs a antecipar — modal E painel de fluxo (15/jun/2026)
+- **Modal** (ProvisaoCard): painel "Antecipar OCs para cobrir o desencaixe" — checkboxes por OC, taxa
+  editável, botões Todas/Limpar/**Sugerir p/ cobrir** (menor conjunto, entrega mais cedo, que mantém
+  acumulado ≥ 0). Recompute **client-side** (`simulateAntecipacao`/`suggestAntecipacao`, exportados do
+  ProvisaoCard). Card "🔮 Fluxo simulado" abaixo mostra a tabela mês a mês recomputada + desencaixe
+  antes→depois + custo.
+- **Painel de Fluxo de Caixa** (index.tsx): o toggle "Antecipar OCs Havan a faturar" agora lista as OCs
+  com checkboxes (Todas/Limpar/Sugerir, default todas) e o **fluxo de caixa real reflete só as
+  selecionadas**. Backend: `/api/cashflow` param **`antecipa_havan_aberto_ocs`** (lista por vírgula;
+  **vazio = todas**). No front, seleção vazia → não envia o toggle (não antecipa nada).
+- **PDF reflete a seleção**: `GET /api/havan/aberto-detalhe/pdf?ocs=<lista>&taxa=` → helper
+  `_havan_simular_antecipacao` recomputa e o PDF ganha seção "Simulação — antecipando N OC(s)"
+  (KPIs sem/com + custo + tabela mês a mês). Botão do modal passa as OCs marcadas + taxa.
+
+Ver [[ecommerce-sicredi-emprestimo]] (IOF Sicredi auto-detectado do Sheets, mesma sessão 15/jun).
