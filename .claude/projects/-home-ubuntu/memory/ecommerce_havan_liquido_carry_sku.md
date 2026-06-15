@@ -52,3 +52,18 @@ líquido_sku = preço_atacado_Havan
 
 Relacionado: [[ecommerce-dre-competencia-revisar]], [[ecommerce-havan-dashboard]],
 [[ecommerce-havan-portal-pedidos]], [[ecommerce-sicredi-emprestimo]] (Selic/spread).
+
+## ✅ EXECUTADO (15/jun/2026) — resultado + verificações
+**Líquido por SKU (cenário forward, pós-carry 121d) — premissas: Selic 1,07%/mês (carry 4,32%), ICMS déb 9,3% blended real − crédito, PIS/COFINS 3,65%, IRPJ/CSLL presumido 3,08%, comissão Mark 1%:**
+- Slim Pro 2 (corpo 25,94 + 4 ventosas transp 3,05 = R$38,14): líq **39,6%**
+- Haste (48,62): **36,2%** · Cabo 12v 3m (25 flat): **34,0%** · Cabo USB-C 5m: **34,0%** · Cabo 12v 2m: **32,4%** · Cabo USB-C 3m: **28,7%**
+- Case Plástico c/ Imãs **88mm** (corpo 49,25 + imã 88mm 127,04 = R$176,29): líq **23,5%** ← menor margem, maior receita; é o piso real
+- **PONDERADO LIMPO: 30,6%** (receita R$966.170 = Havan 2026; líquido R$296.002). Excel `havan_liquido_por_sku.xlsx` no Telegram (3 abas).
+
+**Verificações decisivas (corrigem suposições anteriores):**
+1. **Custo do imã 88mm NÃO está no `product_costs`** — está em **`order_item_component_override`** (component 121 → R$127,04) POR PEDIDO. O `compute_profitability` aplica via `_load_item_component_overrides`. Por isso meu 1º diagnóstico ("DRE subcusteia") estava ERRADO — eu só tinha olhado product_costs.
+2. **DRE custeia os cases corretamente:** NF 552 (dez/2025) = 66mm (tinha estoque); de jan/2026 (NF 564) em diante = 88mm. A virada bate com o esgotamento do 66mm. Override cobre 564/579/582; 552 fica 66mm e está CERTO.
+3. **NFs canceladas NÃO entram no DRE:** 547 e 552 têm `exclude_from_revenue=1` + `valor_devolvido`=cheio. A query do DRE (`api.py:6952`, `situacao=6 AND exclude_from_revenue=0`) as tira da receita E do CMV (não vão pro orders_fees → compute_profitability nem processa). Sem custo-fantasma. **Regra geral: cancelada nunca entra no DRE.**
+4. Quantidades LIMPAS (order_items_detail, mapeado por valor à NF, excluindo 547/552): case 1.300 (−300 da 552), haste 1.150 (−650), slim 2.150 (−650), cabo 12v 3m 2.720 (−650), cabo USB-C 3m 1.555 (−650). Cabos 2m/USB-C 5m sem mudança.
+
+**Pendências reais (não-case):** (a) Slim Pro 2 e cabos R$25 são mudança de produto/fornecedor — registrar no `product_costs` (forward) só quando confirmado p/ todos os canais; cabos R$25 ainda é **custo-alvo** (fornecedor regime normal pendente → +4% crédito ICMS depois). (b) NF 561 (devolução travada) — verificar à parte se a parte não-devolvida tem case a contar.
