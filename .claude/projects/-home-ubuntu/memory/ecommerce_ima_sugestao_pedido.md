@@ -56,5 +56,17 @@ específico do snapshot Havan** (`havan_snapshot.data_json`), não o valor da NF
 - PICO: ML 1.137 (tendência) + Havan 74 = 1.211 cases/mês → sugestão 28.000 imãs (7.000 cases).
 - Pipeline 4.888 cases. As três visões de empresa devolvem os mesmos números.
 
+**Atualização 13/jun/2026 (commit `79252a1`) — sugestão primária passou a ser o RITMO 7d.**
+Hoje há 3 cenários no card: Ritmo 30d (ML 30d + Havan média 3m), **Ritmo 7d** (ML+Havan venda_7d
+× 30/7) e Pior caso (ML pico + Havan maior mês). Decisão CFO: a **sugestão primária** (campos
+legados `ima_suggested_magnets/cases/coverage_months`, que o alerta usa) deixou de ser o PICO e
+passou a ser o **Ritmo 7d** — o "maior mês" Havan tinha pouco histórico e era pouco confiável; o
+7d é responsivo e bate com o alerta/cobertura 7d. O pico virou **stress separado** em campos
+`ima_suggested_*_pico`. No backend: `_ima_sugg_demand = _demand_combined_7d` (era `_pico`);
+`_ima_sugg_*_pico` novos. Frontend: box "Ritmo 7d" com selo "★ recomendado"; box "Pior caso" usa
+os campos `*_pico`. Validado: primária 7d = 24.000 imãs (era 28.000 do pico); pico = 28.000; 30d =
+12.000. ⚠️ Caveat: o 7d Havan extrapola 1 semana (venda_7d×30/7) — responsivo mas pode capturar
+pico pontual de recompra (no dia, Havan 7d≈287/mês vs maior-mês 74 e média-3m 63).
+
 Relacionado: [[ecommerce_havan_backlog_faturamento_transito]], [[ecommerce_import_cost]],
-[[ecommerce_cashflow_financiado]].
+[[ecommerce_cashflow_financiado]], [[ecommerce-havan-portal-pedidos]].

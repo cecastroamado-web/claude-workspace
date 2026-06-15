@@ -65,5 +65,68 @@ A RF que cobre a garantia do Sicredi = aplicação de **R$ 300k em 02/06/2026, c
   Rendimento (96% CDI) / Bruto + "em garantia, bloqueada".
 - Validado 10/jun: 300k desde 02/06 = rendimento R$ 737 (8 dias), bruto R$ 300.737.
 
+## Custo da operação — parcela × rendimento da garantia (12/jun/2026, commit `fa3f959`)
+Pedido CFO: ver a evolução da parcela mensal lado a lado com o rendimento da RF em garantia
+para apurar o **custo geral da operação**. Implementado:
+- **`GET /api/sicredi-loan/schedule`** (api.py): cronograma COMPLETO das N parcelas (SAC/Price,
+  juros = saldo × (Selic do mês + spread)) + rendimento mês a mês da RF em garantia (principal
+  da conta SICREDI rendendo %CDI). Custo líquido do mês = juros − rendimento RF; **custo geral =
+  juros totais − rendimento total da garantia** (a RF bloqueada abate o custo do crédito). CDI/
+  Selic futuros = último mês fechado do BCB (taxas constantes — é projeção, não realizado).
+- Helper **`_rf_garantia_state(empresa_norm)`** (api.py, perto de `_sicredi_loan_schedule`):
+  reusa a fonte do card RF do overview (linhas INVESTIMENTO RENDA FIXA com CONTA contendo
+  SICREDI; filtra churn antigo da INTER). Devolve principal, %CDI, cdi_map, last_cdi, rendimento
+  até hoje.
+- Frontend: `SicrediLoanCard.tsx` ganhou seção expansível "Custo da operação" — 3 KPIs (juros,
+  rendimento da garantia, custo líquido) + tabela parcela a parcela + rodapé de totais. Hook
+  inline `api.sicrediLoanSchedule(empresa)`; tipos `SicrediSchedule`/`SicrediScheduleRow` em
+  api.ts.
+- **Validado** vs DB real: PV 450k/60x SAC @1,47% → 1ª parcela R$14.115 (bate c/ provisão); juros
+  totais R$201.758 (44,8% PV); garantia 300k @96%CDI (composto) rende **R$253.886** no prazo.
+- **Custo NOMINAL composto = −R$52.128 era ENGANOSO** (CFO questionou, com razão). Decompondo: o
+  empréstimo AMORTIZA (SAC, saldo médio R$228.750, cai abaixo dos 300k já na parcela #22) enquanto
+  a garantia CRESCE (saldo médio R$411.938, 1,8× a exposição) e COMPÕE; e a soma é nominal
+  (ignora valor do dinheiro no tempo). Os 3 fatores juntos produzem o negativo contraintuitivo.
+- **Modelo final (commit `6b78d37`, decisão CFO): garantia COMPÕE (juros compostos = realidade da
+  RF) + apresenta o custo em VALOR PRESENTE.** Juros são front-loaded, rendimento composto é
+  back-loaded; trazer ambos a hoje é a comparação justa. **Taxa de desconto = SELIC** (commit
+  `c7b0fa7`, decisão CFO): NÃO a taxa do empréstimo — o spread de 0,4% é prêmio de risco de crédito
+  do banco, não custo de oportunidade puro; ambos os fluxos são de baixo risco → desconta-se pela
+  taxa básica livre de risco. **PV juros R$163.740 − PV rendimento R$180.672 = PV custo líquido
+  −R$16.932 (≈ neutro, −3,8% do PV).** (Selic 1,07% e a própria RF 96%CDI 1,03% dão ~o mesmo
+  ~−17k, o que reforça a escolha; com a taxa do empréstimo 1,47% daria −8.264.) Card mostra custo
+  nominal + destaca o custo em VP com a explicação. Campos novos:
+  `desconto_am`, `pv_juros_total`, `pv_rendimento_total`, `pv_custo_liquido_total`,
+  `pv_custo_efetivo_pct`, `rf_saldo_final` (composto ≈ R$553.886). (Houve um passo intermediário
+  com RF simples = custo +R$16.861, descartado: RF real compõe.)
+- **MODELO FINAL (commit `b3c26bb`, decisão CFO 13/jun): CUSTO EFETIVO de crédito com garantia.**
+  O "custo líquido" (juros − rendimento) dava negativo enganoso (−16.932) e o CFO recusou ("o banco
+  jamais perde"). Insight do CFO: a garantia de R$300k rende ~Selic (96% CDI, confirmado que rende
+  mesmo penhorada — bloqueada só p/ saque), então na parte do saldo COBERTA pela garantia você paga
+  só o **spread líquido** (taxa empréstimo − rendimento garantia ≈ 0,44%/mês = spread 0,40% + gap
+  Selic−96%CDI 0,04%); só o **EXCEDENTE** (saldo acima de R$300k, R$150k inicial) paga a **taxa
+  cheia** Selic+spread. No SAC o excedente encolhe e zera quando o saldo fica todo coberto (parcela
+  #22). **Custo efetivo: R$76.953 nominal / R$64.306 VP (≈17,1% do liberado, ~3,4%/ano)** vs juros
+  cheios R$201.758/R$163.740 — a garantia abate ~R$124.805. O banco sempre ganha ≥ spread (positivo).
+  Fórmula/parcela: `coberto×max(0,taxa−rend_garantia) + excedente×taxa`. Campos: `coberto`,
+  `excedente(_inicial)`, `net_rate_coberto_am`, `custo_efetivo_total`, `pv_custo_efetivo_total`.
+  Card mostra decomposição coberto/excedente por parcela. (Histórico descartado: "custo líquido"
+  nominal/VP e a fase de RF simples.)
+- ⚠️ Tudo é projeção a **taxas constantes** (último mês fechado do BCB) por 60 meses — extrapolação
+  longa; sinalizado na UI. Refinar com curva futura de Selic/CDI se o CFO quiser.
+
+## IOF — auto-detectado do Sheets (15/jun/2026)
+O IOF é cobrado de uma vez logo após a liberação (já debitado no caixa → NÃO entra nas parcelas
+futuras da provisão; só no CUSTO da operação). Lido AUTOMATICAMENTE da planilha p/ cobrir operações
+futuras sem reconfig: helper `_sicredi_iof_auto(empresa_norm)` (api.py, perto de `_rf_garantia_state`)
+soma os débitos cuja DESCRIÇÃO DA CONTA='IOF' na conta **SICREDI** da empresa (efetivados, valor<0).
+Override manual opcional: coluna **`iof`** em `sicredi_loan_config` (NULL=auto). `/api/sicredi-loan`
+devolve `iof`(override) + `iof_auto`; `/schedule` soma o IOF ao custo: `custo_total_com_iof` (nominal)
+e `pv_custo_total_com_iof` (IOF em t=0 → PV=nominal) + `_pct`. Card `SicrediLoanCard.tsx` tem campo
+IOF editável (vazio=auto) e a seção "Custo da operação" virou **Custo total da operação (c/ IOF)** =
+crédito + IOF. **Validado 15/jun: IOF real R$14.000,16 (12.290,16 diário + 1.710,00 adicional=0,38%×450k),
+liberado 10/06/2026; custo crédito R$76.952,70 + IOF → custo total R$90.952,86 nominal (20,2% do PV) /
+R$78.305,72 VP.** Migração `ALTER TABLE sicredi_loan_config ADD COLUMN iof REAL` no db.py.
+
 Ver [[ecommerce_provisao_pontos_cegos]], [[ecommerce_cashflow_financiado]] (simulação de
 alavancagem Sicredi no /api/cashflow, separada disto).

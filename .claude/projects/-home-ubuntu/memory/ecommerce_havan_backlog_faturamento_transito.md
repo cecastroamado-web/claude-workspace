@@ -56,3 +56,30 @@ descontam o em-trânsito; ver [[ecommerce-havan-dashboard]].
 **Plano arquivado** (camada por-NF com status/confirmação manual/matching #HVN#, caso um dia
 queiram auditoria por nota): `/home/ubuntu/.claude/plans/majestic-stirring-willow.md`.
 Relacionado: [[ecommerce_ima_sugestao_pedido]].
+
+## Card "Havan a faturar" clicável + detalhe por OC (15/jun/2026)
+O banner "🏬 Havan a faturar" na provisão (ProvisaoCard.tsx) virou **clicável** → abre Dialog com o
+custo POR OC para entregar/faturar as OCs abertas. Endpoint **`GET /api/havan/aberto-detalhe`** (api.py)
+reusa `_havan_oc_econ_mapper` + as taxas Havan: por OC devolve valor, ICMS líq (12%−créditos), PIS/COFINS
+3,65%, IRPJ/CSLL 2,28%, imposto_total, cmv_avista (cabos/ventosas −30d) + cmv_corpo (corpos 50% +30/+60d),
+cmv_total, custo_total, líquido + itens. Tipos `HavanAbertoDetalhe/OC/Item` + `api.havanAbertoDetalhe()`.
+Validado 15/jun: 8 OCs, receita R$832.080 − insumos R$341.673 − impostos R$121.690 = líquido R$368.716.
+
+## Simulação Havan — botão "Antecipar recebível da OC" (15/jun/2026)
+Em `/simulacao-havan` (features/simulacao-havan/index.tsx): toggle "Calcular antecipação" + campos taxa
+(default **1,8% a.m.**) e prazo (default **121d** = prazo de pgto da OC). Desconto **racional composto**:
+VP = receita/(1+i)^(dias/30); custo = receita − VP; resultado antecipando = resultado − custo. Mostra VP
+recebido hoje, custo da antecipação, resultado com vs sem. 1,8%/121d ≈ 6,9% da receita. **O PDF da
+Simulação de Pedido inclui a seção "Antecipação do recebível"** quando ligada (HavanSimPdfBody ganhou
+antecipar/antecip_taxa_am/antecip_dias; `build_havan_simulacao_pdf` renderiza KPIs+tabela).
+
+## Card detalhe maior + PDF do desencaixe + antecipação das OCs no FLUXO (15/jun/2026)
+- Modal "Havan a faturar" (ProvisaoCard) expandido p/ ~96vw×92vh + **botão "📄 PDF do desencaixe"**
+  (`GET /api/havan/aberto-detalhe/pdf` → `build_havan_aberto_pdf` no havan_report.py; KPIs receita/insumos/
+  impostos/líquido + tabela por OC). `api.havanAbertoDetalhePdf()` baixa blob.
+- **Antecipar OCs a faturar NO FLUXO** (`/api/cashflow` param **`antecipa_havan_aberto`**, reusa
+  taxa_am/modelo): cada OC entra LÍQUIDA no mês da ENTREGA (ou hoje, se já entregue) em vez do bruto em
+  entrega+121d; desconto = custo. Resumo `antecipa_havan_aberto` (qtd/bruto/desconto/líquido/títulos).
+  ⚠️ Diferente do `antecipa_havan` existente, que antecipa as FATURAS JÁ EMITIDAS (status A RECEBER) p/ hoje.
+  Toggle próprio "Antecipar OCs Havan a faturar (na entrega)" no cashflow, vale nos 2 modos. Validado
+  15/jun: 8 OCs, bruto R$832.080, desconto R$57.768,50 (6,94%, 121d), líquido R$774.311,50.
