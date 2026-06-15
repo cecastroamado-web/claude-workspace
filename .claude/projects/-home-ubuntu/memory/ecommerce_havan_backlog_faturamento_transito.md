@@ -81,6 +81,12 @@ antecipar/antecip_taxa_am/antecip_dias; `build_havan_simulacao_pdf` renderiza KP
 - **Bases dos cases (fornecedor Gedeval = bucket `corpo`, + demais produzidos)**: **120 dias do
   faturamento ≈ entrega → `entrega+120d`** (alinha com o recebível Havan de ~121d). Antes era 50% +30 / 50% +60.
 Total do CMV não muda (R$ 341.673 nas OCs atuais), só a distribuição mensal (bases pulam p/ out–dez).
+**Atualização 15/jun (CFO): ventosas são COMPRA EM BLOCO ÚNICO** (não dá p/ quebrar; comprar já p/
+preparar). Constante `_HAVAN_VENTOSA_COMPRA_DATA="2026-06-19"`: 50% em 19/06 + 25%/25% em 30/60d da
+compra, consolidando TODAS as OCs num só lançamento (pedido="(todas as OCs)"). Cabos e bases seguem
+por OC. Validado: ventosas R$ 31.720 (10.400×3,05) → 15.860 (19/06) + 7.930 (19/07) + 7.930 (18/08).
+Custo unitário R$ 3,05 e qtd (Slim=4, Painel=2 → 10.400) confirmados pelo CFO; mantém 10.400 sem abater
+o pouco em estoque. Bases (corpo) R$ 146.828 confirmadas (vêm de product_costs, exceto imã/ventosa).
 Textos do modal/PDF atualizados; detalhe expõe cmv_avista (= cabos+ventosas, rotulado "acessórios") e
 cmv_corpo ("bases"). Imposto inalterado (usa só o crédito de ICMS).
 
