@@ -126,3 +126,12 @@ futuros inalterados. Só no **cashflow** (a provisão não modela dividendos).
 `_DIV_BUFFER_OP`=80k; CAPEX só vem do Sheets) → **sem dobra, nada a corrigir**. Só dividendos eram modelados.
 **Caveat:** hoje a XConnect está sem excesso (saldo apertado) → dividendo modelado já era 0; a guarda fica
 defensiva (ativa quando houver superávit). Resolve o item [ALTA] da auditoria de 14/jun.
+
+## ✅ Buffer de caixa mínimo agora DINÂMICO (16/jun) — antes era 80k fixo chutado
+O `_DIV_BUFFER_OP` (piso de caixa que trava a distribuição de dividendos: `caixa_minimo = impostos_est
++ ads_est + buffer`) era **R$ 80k FIXO hardcoded, sem derivação**. Agora `_buffer_opex_recorrente(rows,
+now, meses=3, margem=0.15)`: média do **opex recorrente CONSOLIDADO** (as 2 empresas juntas — é um buffer
+GERAL, não por empresa, igual à gerência/DRE) dos últimos **3 meses fechados** **+15%**, excluindo
+impostos/ADS (já modelados) e INSUMOS/ICMS (CMV/tributo, não opex). Fallback 80k se <2 meses de histórico.
+Exposto em `div_buffer_opex` (valor/media/detalhe) no `/api/cashflow`. **Hoje: R$ 56.705** (média 49.309
+×1,15; Mar 53.764 / Abr 43.038 / Mai 51.125) vs 80k. Decisão CFO 16/jun: 3 meses, margem 15%, consolidado.
