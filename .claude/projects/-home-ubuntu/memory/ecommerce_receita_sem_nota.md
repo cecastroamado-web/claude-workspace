@@ -74,7 +74,7 @@ não → tratamento à parte). Nada gravado no banco até o CFO fechar a revisã
 **Status 15/jun (fim do dia):** lista pronta, CFO pausou e pediu pra lembrar amanhã. Falta ele marcar
 **S** (sem-nota) / **N** (faturado) nos 21 itens ≥R$5k. XLSX `receita_sem_nota_REVISAR.xlsx` no Telegram;
 lista também em `/home/ubuntu/sem_nota_limpo.csv`. Cauda <R$5k (29 itens ~R$60k, `sem_nota_abaixo5k_LIMPO.csv`)
-fica pra depois (provável tratar como bloco).
+AGORA TAMBÉM no mesmo XLSX (15/jun) p/ o CFO olhar junto — 29 itens = R$43.223, marcar S/N ou em bloco. XLSX `receita_sem_nota_REVISAR.xlsx` reenviado no Telegram com 3 abas (Resumo, Revisar>=5k com dicas, Revisar<5k).
 - **Varredura por nome (15/jun) contra NF-e+NFS-e das 2 empresas:** só **1 forte candidato a TER nota** →
   **#9 R$14.298 "JDD E T T S LTDA" ↔ EMTECH TELECOM JDD R$14.298 (XConnect, nome+valor exatos)** — provável faturado.
   2 falsos positivos (palavra genérica colidiu): Marvin Particip. (R$18k) e JHLFC (R$7,15k) — seguem sem-nota.
