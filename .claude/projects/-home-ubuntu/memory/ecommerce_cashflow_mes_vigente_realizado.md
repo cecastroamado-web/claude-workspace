@@ -95,3 +95,24 @@ Auditoria read-only de `get_cashflow` (modelo é **aditivo sobre saldo_real**, n
 
 Relacionado: [[ecommerce-dre-competencia-revisar]] (auditoria DRE em curso),
 [[ecommerce-cashflow-financiado]], [[ecommerce-sicredi-emprestimo]].
+
+## ✅ IMPLEMENTADO (16/jun) — guarda anti-dupla INSUMOS lançados vs CMV modelado
+INSUMOS lançado (a vencer) já entra no `a_pagar_op`; o CMV modelado (`_havan_aberto_cmv` Havan +
+`_base_payment_schedule` ML) projetava os mesmos insumos → dobra. Fix (commit `8b0c455`):
+- Helpers `_insumo_lancado_avencer_por_sub(rows, empresa)` (soma INSUMOS a-vencer por **SUB-DESCRIÇÃO**
+  do Sheets — o CFO separa cabo/ventosa/cases lá) + `_abate_insumo_modelado` (consome do mês mais cedo,
+  piso 0, dentro da janela) + `_abate_schedule_total` (ML).
+- **Havan** (`_havan_aberto_cmv_lancamentos`): abate **VENTOSAS + CABOS**; subtipo **corpo** (cases Havan
+  120d) fica INTACTO — o "CASES" do Sheets é ML, não Havan.
+- **ML** (`_base_payment_schedule`, 30/60d): abate **CASES**.
+- Aplicado no **fluxo (get_cashflow) E na provisão (get_provisao)**.
+- Corpos Havan: faturamento ≈ entrega−5d → pagamento **entrega+115d** (era +120; ajuste fino).
+- Validado: fluxo `havan_aberto_cmv` 303.548 → **210.345** (−93.203 dobra: ventosa 31.720 cheio + cabo
+  61.483 parcial). Custo de cabo no modelo = **R$25/un flat** (custo-alvo Havan, ainda sem crédito ICMS).
+
+## ⏳ AINDA PENDENTE — DIVIDENDOS do mês vigente em DOBRO (mesma família, NÃO corrigido)
+A guarda de insumos NÃO cobre dividendos. No mês corrente o modelo re-distribui dividendo fresco
+`min(excesso×0,80; 120k)` (api.py:5479-5485) SEM abater o que já foi pago no mês — e o `saldo_real`
+de partida JÁ reflete o dividendo pago. → **dupla subtração no mês vigente** (mesmo no fluxo e provisão).
+Fix proposto: no mês corrente, `dividendo = max(0, modelado − já_pago_no_mês)` (ler DIVIDENDOS efetivado
+do Sheets; helper de dividendo efetivado já existe no overview ~api.py:1906-1909). A pedido do CFO 16/jun.
