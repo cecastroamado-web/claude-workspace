@@ -135,3 +135,13 @@ GERAL, não por empresa, igual à gerência/DRE) dos últimos **3 meses fechados
 impostos/ADS (já modelados) e INSUMOS/ICMS (CMV/tributo, não opex). Fallback 80k se <2 meses de histórico.
 Exposto em `div_buffer_opex` (valor/media/detalhe) no `/api/cashflow`. **Hoje: R$ 56.705** (média 49.309
 ×1,15; Mar 53.764 / Abr 43.038 / Mai 51.125) vs 80k. Decisão CFO 16/jun: 3 meses, margem 15%, consolidado.
+
+## ✅ IMPLEMENTADO (16/jun) — imposto do mês vigente não conta em dobro (casa por COMPETÊNCIA)
+Antes, só lançamento PENDENTE suprimia a estimativa do mês corrente (`_tax_overrides`); imposto já
+PAGO (efetivado, no saldo_real) → estimativa cheia subtraída 2×. Fix: o efetivado deste mês também
+entra no override, **casando por COMPETÊNCIA** (campo COMPETENCIA do Sheets). **Crucial (alerta CFO):**
+parcelamento de período antigo NÃO suprime a competência corrente — ex.: ICMS jan-abr pago em jun vai
+p/ override de (2026,01..04), não toca a estimativa de maio; só DIFAL maio (competência corrente) reduz.
+DIFAL segue residual; demais suprimem 100%. Loop sobre `all_rows_proj` (já filtrado por empresa).
+**Provisão NÃO modela opex** (usa contas a pagar reais `get_contas_pagar_por_dia`) nem buffer → sem dobra de opex lá.
+⚠️ CI (892a91e) falhou por E702 (`;`) nos helpers — corrigido (commit de style); sem mudança de comportamento.
