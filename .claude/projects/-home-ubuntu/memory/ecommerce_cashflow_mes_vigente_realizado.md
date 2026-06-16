@@ -158,3 +158,15 @@ Card mostra R$ 832.080 (8 OCs, recebimento = entrega+~121d), − imposto ~121.69
 (compra antes da entrega; reflete o abatimento dos insumos já lançados). Recebimentos: out/26 183.080,
 nov/26 288.375, dez/26 360.625 — "a maioria além dos 60d desta provisão". Revisar a apresentação/uso
 do card (recebíveis confirmados mas fora da janela curta da provisão; e o líquido pós-antecipação).
+
+## ⏳ PENDENTE — adicionar CMV de reposição do ML na PROVISÃO (quando crescer)
+A provisão não modela `cmv_base`/`cmv_imas`/`cmv_varejo88` (reposição de corpos 66mm + imãs + IM-88 do
+ML) que o cashflow tem. Hoje é ~R$0 na janela (cmv_base só out/2026 = 19.453; imãs gated; IM-88 não
+fechou), então DEFERIDO. Implementar quando a reposição ML voltar a ter valor (extrair helper do
+`_base_payment_schedule` p/ os dois usarem). Dividendo (condicional) já foi adicionado à provisão (16/jun).
+
+## Reconciliação gráfico × provisão (16/jun) — o que cada um modela
+Só no GRÁFICO: dividendos (agora também na provisão), CMV reposição ML (deferido), empréstimo capital de
+giro (simulação). Só na PROVISÃO: releases ML dia a dia (money_release real; o gráfico usa estimativa
+mensal), disponível p/ antecipação ML hoje. Em AMBOS: Sicredi, Havan OCs (recebível+imposto+CMV insumos,
+com antecipação), impostos, ADS, empréstimo ML (piso 30.5k), parcelamento, buffer dinâmico.
