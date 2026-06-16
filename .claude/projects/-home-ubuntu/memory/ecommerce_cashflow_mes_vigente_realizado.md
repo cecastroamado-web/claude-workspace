@@ -145,3 +145,10 @@ p/ override de (2026,01..04), não toca a estimativa de maio; só DIFAL maio (co
 DIFAL segue residual; demais suprimem 100%. Loop sobre `all_rows_proj` (já filtrado por empresa).
 **Provisão NÃO modela opex** (usa contas a pagar reais `get_contas_pagar_por_dia`) nem buffer → sem dobra de opex lá.
 ⚠️ CI (892a91e) falhou por E702 (`;`) nos helpers — corrigido (commit de style); sem mudança de comportamento.
+
+## ⏳ PENDENTE (CFO 16/jun) — empréstimo ML: pagamento MÍNIMO de R$ 30.500/mês
+O empréstimo sobre faturamento ML tem retenção de 25% do repasse, MAS existe um **pagamento mínimo
+mensal de R$ 30.500**. Se os 25% de retenção não alcançarem esse valor no mês, precisa **cobrir a
+diferença** (sai caixa extra). Hoje o modelo (cashflow `_loan_schedule` + provisão) provavelmente só
+aplica os 25% (cap), sem o piso. **Revisar no GRÁFICO de fluxo de caixa E na PROVISÃO**: garantir que a
+parcela do mês = max(25% do repasse, R$ 30.500). A pedido do CFO.
