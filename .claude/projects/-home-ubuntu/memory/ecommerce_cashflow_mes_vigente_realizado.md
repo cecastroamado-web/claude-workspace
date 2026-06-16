@@ -116,3 +116,13 @@ A guarda de insumos NÃO cobre dividendos. No mês corrente o modelo re-distribu
 de partida JÁ reflete o dividendo pago. → **dupla subtração no mês vigente** (mesmo no fluxo e provisão).
 Fix proposto: no mês corrente, `dividendo = max(0, modelado − já_pago_no_mês)` (ler DIVIDENDOS efetivado
 do Sheets; helper de dividendo efetivado já existe no overview ~api.py:1906-1909). A pedido do CFO 16/jun.
+
+## ✅ IMPLEMENTADO (16/jun) — dividendo do mês vigente não conta em dobro (commit d25d463)
+Mês corrente: `dividendos = max(0, modelado − já_pago)` onde já_pago = DIVIDENDOS **efetivado** no mês
+(helper `_abaixo_linha_pago_mes(rows, empresa, "DIVIDENDOS", ano, mes)`, casado pela DATA de pagamento).
+Total distribuído no mês = max(modelado, já-pago) → respeita o teto de 120k e nunca subtrai 2×. Meses
+futuros inalterados. Só no **cashflow** (a provisão não modela dividendos).
+**Sweep pró-labore/CAPEX:** NÃO são modelados no forward (pró-labore = despesa real coberta pelo
+`_DIV_BUFFER_OP`=80k; CAPEX só vem do Sheets) → **sem dobra, nada a corrigir**. Só dividendos eram modelados.
+**Caveat:** hoje a XConnect está sem excesso (saldo apertado) → dividendo modelado já era 0; a guarda fica
+defensiva (ativa quando houver superávit). Resolve o item [ALTA] da auditoria de 14/jun.
