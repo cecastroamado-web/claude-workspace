@@ -170,3 +170,11 @@ Só no GRÁFICO: dividendos (agora também na provisão), CMV reposição ML (de
 giro (simulação). Só na PROVISÃO: releases ML dia a dia (money_release real; o gráfico usa estimativa
 mensal), disponível p/ antecipação ML hoje. Em AMBOS: Sicredi, Havan OCs (recebível+imposto+CMV insumos,
 com antecipação), impostos, ADS, empréstimo ML (piso 30.5k), parcelamento, buffer dinâmico.
+
+## 16/jun — provisão: dividendo condicional REVERTIDO + quitação do empréstimo com piso
+- **Dividendo condicional na provisão: REVERTIDO.** Distribuía o teto (R$120k) no PICO temporário da
+  antecipação de OCs (recebível trazido do futuro com desconto = financiamento, NÃO lucro distribuível)
+  → saldo absurdo (-529k que o CFO viu). Dividendo fica só no gráfico; provisão = obrigações puras.
+- **Quitação do empréstimo ML (card):** estimava só com 25% (dava jan/2027). Corrigido p/ acumular
+  `max(retenção 25%, piso R$30.500)` por mês → quita ~nov/2026 (saldo 138.904 / ~30.500). Card a revisar:
+  Contratado 214k, Total a pagar 246.028, Pago 107.123, Saldo devedor 138.904, Abatido no período 77.990.
