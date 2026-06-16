@@ -69,3 +69,16 @@ vendidos tiveram custo. Ao lançar a "Receita sem documento fiscal", aplicar um 
 ex.: ~31,7% de abril/2025 como no ML estimado [[ecommerce-dre-competencia-revisar]], ou custo por
 produto se identificável). Também avaliar imposto (essas vendas sem nota recolheram imposto? provavelmente
 não → tratamento à parte). Nada gravado no banco até o CFO fechar a revisão.
+
+## 🔔 LEMBRAR 16/jun/2026 — CFO vai marcar os 21 ≥R$5k (S/N)
+**Status 15/jun (fim do dia):** lista pronta, CFO pausou e pediu pra lembrar amanhã. Falta ele marcar
+**S** (sem-nota) / **N** (faturado) nos 21 itens ≥R$5k. XLSX `receita_sem_nota_REVISAR.xlsx` no Telegram;
+lista também em `/home/ubuntu/sem_nota_limpo.csv`. Cauda <R$5k (29 itens ~R$60k, `sem_nota_abaixo5k_LIMPO.csv`)
+fica pra depois (provável tratar como bloco).
+- **Varredura por nome (15/jun) contra NF-e+NFS-e das 2 empresas:** só **1 forte candidato a TER nota** →
+  **#9 R$14.298 "JDD E T T S LTDA" ↔ EMTECH TELECOM JDD R$14.298 (XConnect, nome+valor exatos)** — provável faturado.
+  2 falsos positivos (palavra genérica colidiu): Marvin Particip. (R$18k) e JHLFC (R$7,15k) — seguem sem-nota.
+  Os outros 18 sem match real.
+- **Próximo passo após o S/N:** somar confirmados + os R$615.463 já fechados → separar por ANO →
+  CMV (2024 31% / 2025 43% / 2026 38%) → lançar "Receita sem documento fiscal" + CMV no DRE de gestão.
+  **NADA gravado no banco até o CFO fechar.**
