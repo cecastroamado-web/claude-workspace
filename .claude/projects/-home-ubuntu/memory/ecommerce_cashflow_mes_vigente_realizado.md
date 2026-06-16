@@ -152,3 +152,9 @@ mensal de R$ 30.500**. Se os 25% de retenção não alcançarem esse valor no m�
 diferença** (sai caixa extra). Hoje o modelo (cashflow `_loan_schedule` + provisão) provavelmente só
 aplica os 25% (cap), sem o piso. **Revisar no GRÁFICO de fluxo de caixa E na PROVISÃO**: garantir que a
 parcela do mês = max(25% do repasse, R$ 30.500). A pedido do CFO.
+
+## ⏳ PENDENTE (CFO 16/jun) — revisar card "Havan a faturar (pedidos abertos)"
+Card mostra R$ 832.080 (8 OCs, recebimento = entrega+~121d), − imposto ~121.690, − insumos ~63.517
+(compra antes da entrega; reflete o abatimento dos insumos já lançados). Recebimentos: out/26 183.080,
+nov/26 288.375, dez/26 360.625 — "a maioria além dos 60d desta provisão". Revisar a apresentação/uso
+do card (recebíveis confirmados mas fora da janela curta da provisão; e o líquido pós-antecipação).
