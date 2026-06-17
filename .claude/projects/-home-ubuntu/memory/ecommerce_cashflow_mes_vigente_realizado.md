@@ -199,3 +199,11 @@ c/ todas OCs antecipadas: 12/10 -77k→-110k (mais verdadeiro). Descasamento ins
   estoque), empréstimos pessoais (122k = financiamento), pró-labore (80k) e CAPEX no "burn". O ML é
   lucrativo (~20% rentab.). Caixa negativo = capital de giro (compra estoque) + amortização de dívida +
   pró-labore + ciclo Havan, NÃO prejuízo. Provisão é CAIXA, não P&L.
+
+## 🔑 REGRA (CFO 16/jun) — TODA variável de simulação reflete no GRÁFICO E na PROVISÃO dia a dia
+Princípio de design: qualquer parâmetro de simulação (parcelamento de impostos, antecipa_havan,
+antecipa_havan_aberto, Sicredi, empréstimo giro, etc.) DEVE refletir igual no `/api/cashflow` (gráfico)
+E no `/api/provisao` (dia a dia). Gating no frontend deve ser idêntico (ex.: antecipação por OC NÃO exige
+financeMode — corrigido 16/jun). **Status:** finance_taxes ✅, antecipa_havan ✅, antecipa_havan_aberto ✅
+(corrigido), Sicredi ✅. **FALTA: `emprestimo_giro` (capital de giro)** — está só no cashflow, não na
+provisão (nem param nem lógica). Pendente implementar na provisão (PV entra hoje + parcelas saem/mês).
