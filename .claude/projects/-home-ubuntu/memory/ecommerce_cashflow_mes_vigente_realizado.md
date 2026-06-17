@@ -178,3 +178,10 @@ com antecipação), impostos, ADS, empréstimo ML (piso 30.5k), parcelamento, bu
 - **Quitação do empréstimo ML (card):** estimava só com 25% (dava jan/2027). Corrigido p/ acumular
   `max(retenção 25%, piso R$30.500)` por mês → quita ~nov/2026 (saldo 138.904 / ~30.500). Card a revisar:
   Contratado 214k, Total a pagar 246.028, Pago 107.123, Saldo devedor 138.904, Abatido no período 77.990.
+
+## 16/jun — cabos pagos no vencimento do cartão ML (não à vista)
+Cabos das OCs: pagamento modelado movido de `entrega−30d à vista` para o VENCIMENTO DO CARTÃO ML
+(dia 23; compra após dia 10 vence dia 23 do mês SEGUINTE). Mais preciso — surfaceia o cabo da OC
+de 27/06 (cartão 23/06) que antes era assumido pago 28/05 (passado, fora da projeção). Provisão 120d
+c/ todas OCs antecipadas: 12/10 -77k→-110k (mais verdadeiro). Descasamento insumo×recebível é REAL
+(paga no cartão dias antes do recebível da OC); a antecipação das OCs é o que reduz o buraco. `_havan_aberto_cmv_lancamentos`.
