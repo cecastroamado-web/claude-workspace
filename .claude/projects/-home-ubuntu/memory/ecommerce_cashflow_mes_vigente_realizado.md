@@ -207,3 +207,8 @@ E no `/api/provisao` (dia a dia). Gating no frontend deve ser idêntico (ex.: an
 financeMode — corrigido 16/jun). **Status:** finance_taxes ✅, antecipa_havan ✅, antecipa_havan_aberto ✅
 (corrigido), Sicredi ✅. **FALTA: `emprestimo_giro` (capital de giro)** — está só no cashflow, não na
 provisão (nem param nem lógica). Pendente implementar na provisão (PV entra hoje + parcelas saem/mês).
+
+## ⏳ PENDENTE (CFO 17/jun) — revisar ritmo de vendas ML 7 dias (projeção do mês)
+O cashflow projeta vender ~1046 cases no mês usando a métrica dos últimos 7 dias (7d×30/7). CFO suspeita
+que está alto/não reflete a realidade. Revisar `_demand_combined_7d` / a projeção mensal de ML por ritmo
+7d vs 30d — ver se o 7d está extrapolando um pico. Afeta cmv_base/pipeline e a estimativa de receita ML.
