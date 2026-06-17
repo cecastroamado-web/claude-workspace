@@ -45,6 +45,17 @@
 - Script: `setup_bling_oauth.py` ou troca manual via POST /oauth/token
 - Token: access 6h, refresh 30 dias (auto-renova)
 
+## Detecção automática de CANCELAMENTO de NF-e (jun/2026)
+
+- **Problema**: o sync `_run_bling_nfe_db_sync` (scheduler 06h30) só busca `situacao=6` e faz `INSERT OR IGNORE` — quando uma NF é cancelada DEPOIS de gravada, a linha velha fica `situacao=6` para sempre e segue contando como receita. Era tratado na mão (Havan 547/552, e NF 587 em jun/2026).
+- **Fix**: após montar `all_nfes` (lista viva `situacao=6` dos últimos 30d), o sync acha "suspeitas" = linhas do banco `situacao=6`, não-excluídas, `data_emissao>=início` cujo `bling_nfe_id` **não voltou** na lista viva. Para cada suspeita, **re-busca o detalhe** (`get_nfe_details`) e confirma `situacao!=6` (evita falso positivo de paginação); aí faz `UPDATE situacao=<real>, exclude_from_revenue=1`. Alerta CFO no Telegram ("⚠️ NF-e cancelada detectada"). Como marca `exclude_from_revenue=1`, a query de suspeitas não a re-detecta → alerta dispara 1×.
+- **Receita honra `exclude_from_revenue`**: todas as queries em `agent_tools.py` usam `situacao=6 AND COALESCE(exclude_from_revenue,0)=0`. Marcar `exclude_from_revenue=1` é o jeito canônico de tirar uma NF da receita/DRE sem mexer em `situacao`.
+- **Limite**: só pega cancelamentos de NFs com `data_emissao` nos últimos 30d (janela do sync). Cancelamento de NF antiga não é detectado por esse caminho.
+- **Caveat vs regra "linkDanfe"**: acima diz "não confiar em `situacao`". O detector usa `situacao` do DETALHE re-buscado + queda da lista viva como sinal, não como verdade isolada — é defensável porque dupla-confirma.
+
+## CASHFLOW/Provisão lê o Sheets, não o bling_nfe
+- O recebível Havan no fluxo/provisão vem da aba **A RECEBER do Sheets** (fonte de verdade de caixa). Cancelar a NF no Bling **NÃO** remove a linha do Sheets — o CFO precisa atualizar o STATUS da linha (≠ "A RECEBER") para sumir do fluxo. O sistema não auto-edita o Sheets (ledger manual do CFO). Ver [[ecommerce-havan-faturadas-antecipacao]].
+
 ## XConnect — Regra Especial de Faturamento
 
 ### Problema
