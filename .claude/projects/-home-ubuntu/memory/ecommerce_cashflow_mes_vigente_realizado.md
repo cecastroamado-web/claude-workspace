@@ -205,8 +205,9 @@ Princípio de design: qualquer parâmetro de simulação (parcelamento de impost
 antecipa_havan_aberto, Sicredi, empréstimo giro, etc.) DEVE refletir igual no `/api/cashflow` (gráfico)
 E no `/api/provisao` (dia a dia). Gating no frontend deve ser idêntico (ex.: antecipação por OC NÃO exige
 financeMode — corrigido 16/jun). **Status:** finance_taxes ✅, antecipa_havan ✅, antecipa_havan_aberto ✅
-(corrigido), Sicredi ✅. **FALTA: `emprestimo_giro` (capital de giro)** — está só no cashflow, não na
-provisão (nem param nem lógica). Pendente implementar na provisão (PV entra hoje + parcelas saem/mês).
+(corrigido), Sicredi ✅. ✅ `emprestimo_giro` (capital de giro) — IMPLEMENTADO na provisão (17/jun): PV entra hoje + parcelas
+Price/SAC saem 1×/mês (reusa `_simulate_emprestimo_giro`). **Regra 100% honrada: todas as variáveis de
+simulação refletem no gráfico E na provisão.**
 
 ## ⏳ PENDENTE (CFO 17/jun) — revisar ritmo de vendas ML 7 dias (projeção do mês)
 O cashflow projeta vender ~1046 cases no mês usando a métrica dos últimos 7 dias (7d×30/7). CFO suspeita
