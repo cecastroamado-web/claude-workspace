@@ -209,7 +209,9 @@ financeMode — corrigido 16/jun). **Status:** finance_taxes ✅, antecipa_havan
 Price/SAC saem 1×/mês (reusa `_simulate_emprestimo_giro`). **Regra 100% honrada: todas as variáveis de
 simulação refletem no gráfico E na provisão.**
 
-## ⏳ PENDENTE (CFO 17/jun) — revisar ritmo de vendas ML 7 dias (projeção do mês)
-O cashflow projeta vender ~1046 cases no mês usando a métrica dos últimos 7 dias (7d×30/7). CFO suspeita
-que está alto/não reflete a realidade. Revisar `_demand_combined_7d` / a projeção mensal de ML por ritmo
-7d vs 30d — ver se o 7d está extrapolando um pico. Afeta cmv_base/pipeline e a estimativa de receita ML.
+## ✅ REVISADO (CFO 17/jun) — ritmo ML 7d: MANTER como está
+Projeção 7d ≈ 969-1046 cases/mês. Dados reais: ML 7d=163→699/mês (ABAIXO do 90d/3=901 → ML desacelerando,
+não em pico); Havan case 7d=63→270/mês vs 188 no 30d (Havan extrapola repique recente). Combinado 7d=969,
+30d=763. O 7d é volátil (×30/7 amplia 1 semana) e é a métrica PRIMÁRIA da sugestão de pedido
+(`_ima_sugg_demand = _demand_combined_7d`). **Decisão CFO: MANTER o 7d** (modelo já tem 30d/90d/pico como
+cenários). Não é pico de ML — quem infla é a Havan 7d.
