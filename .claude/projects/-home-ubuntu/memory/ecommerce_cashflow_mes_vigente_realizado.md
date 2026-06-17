@@ -185,3 +185,17 @@ Cabos das OCs: pagamento modelado movido de `entrega−30d à vista` para o VENC
 de 27/06 (cartão 23/06) que antes era assumido pago 28/05 (passado, fora da projeção). Provisão 120d
 c/ todas OCs antecipadas: 12/10 -77k→-110k (mais verdadeiro). Descasamento insumo×recebível é REAL
 (paga no cartão dias antes do recebível da OC); a antecipação das OCs é o que reduz o buraco. `_havan_aberto_cmv_lancamentos`.
+
+## ⏳ PENDENTE (CFO 16/jun) — fila de revisão do caixa
+- **Provisão card + antecipação some ao trocar filtro:** mesmo com "antecipar todas as OCs" marcado,
+  ao trocar o filtro p/ 120d a provisão mostra -556.172 em 12/10 (= número SEM antecipação; COM dá -167k).
+  CFO suspeita que o crédito da antecipação NÃO está sendo passado quando troca o filtro. Investigar o
+  frontend (ProvisaoCard `dias` vs o finance.antecipa_havan_aberto do parent) — pode não re-passar a
+  seleção ao mudar `dias`, ou o dashboard precisa rebuild/refresh. ⚠️ revisitar os CARDS da provisão.
+- **Pró-labore mal classificado:** está em `CATEGORIAS_ABAIXO_LINHA` (api.py:192) junto com dividendo.
+  É despesa OPERACIONAL (salário do sócio), ≠ dividendo (abaixo da linha). get_overview soma de volta em
+  despesas (api.py:1996-2005), mas a classificação base está errada → revisar no DRE com cuidado (não dobrar).
+- **Reconciliação caixa×P&L (16/jun):** o "ML queima 82k/mês" foi ERRO meu — joguei CMV/insumos (192k =
+  estoque), empréstimos pessoais (122k = financiamento), pró-labore (80k) e CAPEX no "burn". O ML é
+  lucrativo (~20% rentab.). Caixa negativo = capital de giro (compra estoque) + amortização de dívida +
+  pró-labore + ciclo Havan, NÃO prejuízo. Provisão é CAIXA, não P&L.
