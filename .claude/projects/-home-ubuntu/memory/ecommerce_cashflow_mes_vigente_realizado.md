@@ -76,7 +76,17 @@ queries/projeção aguentam 120d sem degradar). Validar com o CFO. Afeta tb a op
    ✅ Verificados OK: override fiscal×a_pagar_op, CMV Havan disjunto (cmv_base só ML), IRPJ/CSLL provisão,
    retenção empréstimo ML (cap 25%), runway, tax/ads_daily display-only.
 
-## ⏳ PENDENTE (CFO 13/jun) — revisar o indicador de BURN RATE (mensal)
+## ✅ RESOLVIDO (18/jun) — burn_rate/net_burn/projeção excluíam o mês parcial (item #3)
+`ultimos_3 = historico[-3:]` (api.py ~3823) incluía o **mês corrente PARCIAL** → subestimava
+receita (~27%) e despesa (~17%), contaminando `burn_rate`, `net_burn` e a `projecao` de 3 meses.
+Fix (commit `cfe6d11`): `historico_completo` (sem o mês corrente) definido antes; `ultimos_3 =
+historico_completo[-3:]` (igual o runway já fazia). Removida a redefinição duplicada de
+historico_completo (linha ~3921). Validado XConnect: agora média de Mar/Abr/Mai (rec 463k/desp
+440k), net_burn −22.656 (gera caixa) em vez de contaminado pelo Jun parcial. Resolve o item #3 + o
+pendente de burn rate. **Mês-vigente agora completo:** dividendos✅(d25d463), impostos✅(competência),
+CMV/ADS✅(limpos), buffer dinâmico✅, burn/projeção✅(este).
+
+## ⏳ (histórico) PENDENTE (CFO 13/jun) — revisar o indicador de BURN RATE (mensal)
 Revisar o cálculo do **burn rate mensal** no fluxo de caixa. Hoje no `get_cashflow` (api.py):
 `burn_rate_bruto = media_desp` (média de despesas dos últimos 3 meses do histórico) e
 `net_burn = media_desp − media_rec`; `runway` usa o último mês COMPLETO (exclui mês parcial). Suspeita
