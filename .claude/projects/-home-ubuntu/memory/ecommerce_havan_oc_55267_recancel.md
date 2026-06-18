@@ -7,7 +7,13 @@ metadata:
   originSessionId: bc097805-a0ae-41ef-988e-5a1b9b9d8aab
 ---
 
-# PENDENTE: OC Havan 2026-55267-1 — NF cancelada p/ refaturar (17/jun/2026)
+# ✅ RESOLVIDO (18/jun): OC Havan 2026-55267-1 — NF cancelada p/ refaturar
+
+**Causa raiz + fix (18/jun):** `_havan_em_transito_por_sku` (api.py) lia `havan_nfe_items` filtrando **só por data de emissão** — não excluía NF cancelada. A 587 (slim 150 + haste 400) ficava presa "em trânsito" e a OC não voltava pra "a faturar". **Fix:** JOIN com `bling_nfe` + filtro `situacao=6 AND COALESCE(exclude_from_revenue,0)=0` (a detecção de cancelamento já marca exclude_from_revenue=1). Resultado: slim/haste da 587 saíram do em-trânsito; OC 2026-55267-1 (R$ 50.750) já tinha voltado ao snapshot de pedidos abertos (varredura 06h) → "a faturar" mostra os 150 slim + 400 haste de novo. Commit no submódulo.
+
+---
+
+## (histórico) PENDENTE: OC Havan 2026-55267-1 — NF cancelada p/ refaturar (17/jun/2026)
 
 O CFO **cancelou a nota** da OC **2026-55267-1** (Havan) para **refaturar**. Sintomas (bug de consistência):
 - A OC **NÃO voltou a aparecer como "a faturar"** no painel (deveria reabrir, já que a NF foi cancelada).

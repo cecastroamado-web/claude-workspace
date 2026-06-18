@@ -9,6 +9,8 @@ metadata:
 
 # Receita sem documento fiscal (vendas sem NF-e) — auditoria p/ DRE (CFO 15/jun/2026)
 
+> **🔴 PENDENTE (reaberto 18/jun/2026):** incluir o **faturamento sem nota no DRE** de gestão. CFO ainda precisa marcar S/N no XLSX (`receita_sem_nota_REVISAR.xlsx`: 21 ≥R$5k + 29 <R$5k). Depois: separar por ano, aplicar CMV (2024~31%/2025~43%/2026~38%) e lançar a linha "Receita sem documento fiscal" no DRE. **NADA gravado no banco até o CFO fechar.**
+
 **Origem:** o DRE conta receita só de NF-e (`bling_nfe`) + ML. Mas houve **venda recebida no caixa SEM
 emissão de NF-e** (clientes que pediram p/ não emitir; revendedores). Está no Sheets como receita
 "VENDA DE PRODUTOS" com **favorecido ≠ "X CONNECT IMPORT"** (o X CONNECT IMPORT é o repasse ML).
