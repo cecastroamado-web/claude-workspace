@@ -7,6 +7,8 @@ metadata:
   originSessionId: 5c7eb85e-fc5e-4fc1-80b9-ec8a21e0ed02
 ---
 
+**✅ Pró-labore corrigido (18/jun):** `_classifica` devolve "abaixo_linha" p/ pró-labore, e os endpoints `/api/overview/competencia` + o de detalhe/categoria (api.py ~1921 e ~2540) **dropavam** ele (não entrava em despesa_op nem em abaixo_linha=div+capex) → resultado operacional superestimado em TODOS os períodos (XConnect: 2024 +41k, 2025 +240k, 2026 +230k; acum. 511k). Fix localizado: somar pró-labore no despesa_op desses 2 (constante `_PROLABORE_NORM`) + na quebra by_category. Demais consumidores (cash overview 2039, DRE endpoint 21080, cashflow) já o tratavam como despesa → não tocados (sem dupla contagem). Commit `e515bac`.
+
 **PENDENTE (anotado 12/jun/2026, a pedido do CFO):** revisar a **aba/relatório DRE** e o
 tratamento de **COMPETÊNCIA** no ecommerce-agent.
 
