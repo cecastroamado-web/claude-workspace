@@ -7,6 +7,23 @@ metadata:
   originSessionId: 5c7eb85e-fc5e-4fc1-80b9-ec8a21e0ed02
 ---
 
+**✅ "Bom dia, CFO" GERAL IMPLEMENTADO (18/jun, commit `d350c0e`):** job `briefing-matinal` no
+scheduler.py (`_run_briefing_matinal`/`_loop_briefing_matinal`), **06h30**, **pula domingo + feriado**
+(`_FERIADOS_BR` hardcoded 2026-27, atualizar anual). Digest único, **suprime seção sem sinal**,
+`_notify` bool → só marca `briefing_matinal_last` se enviou. **ADICIONAL** aos alertas existentes
+(decisão CFO 18/jun). 5 seções (MVP; Quadro por item D-1 → fase 2):
+1. **💰 Caixa hoje** — saldo/empresa (`get_bank_balance`) + total + posição do dia (entra−sai do
+   dias[0] da provisão) + ⚠️ se `saldo_minimo_projetado` (provisão 7d) < SALDO_MINIMO (30k).
+2. **📈 Vendas** — ontem (`get_ml_sales_day` + `get_external_sales_day`) vs média 7d + projeção do
+   mês = MTD + avg7d×dias_restantes (`get_ml_sales_month_projection`).
+3. **🏬 Havan** — em-trânsito (R$+qtd) + a faturar OCs (`_havan_enriched_snapshot`/provisão).
+4. **🧾 Obrigações** — impostos (CATEGORIAS_TRIBUTO) + EMPRESTIMO A VENCER em 7d (Sheets).
+5. **🩺 Saúde** — falhas de sync (scheduler_state).
+Validado 18/jun: caixa (Av 16k/XC 4,8k, ⚠️ -96k em 23/06), vendas (ontem 23.952 ↓21%, proj 225k),
+Havan (132.330/2.975 itens, a faturar 699.750). Obrigações+Saúde suprimidas (sem sinal).
+
+---
+
 **IMPLEMENTADO 11/jun/2026** (commit `7b26022` no ecommerce-agent): alerta Havan dedicado +
 sobre-estoque por velocidade 7d + coluna vel 7d no card de produtos. Detalhes técnicos abaixo na
 seção "ESCOPO DECIDIDO". O roadmap "Bom dia, CFO" GERAL segue pendente.
