@@ -1,11 +1,14 @@
 ---
 name: ecommerce-havan-oc-55267-recancel
-description: "PENDENTE investigar — OC Havan 2026-55267-1 com NF cancelada p/ refaturar não voltou a \"a faturar\" e itens seguem \"em trânsito\""
+description: "RESOLVIDO (18/jun) — OC Havan 2026-55267-1 NF cancelada (587): _havan_faturado_qtd_por_sku faz JOIN bling_nfe filtrando situacao=6 AND exclude_from_revenue=0; 400 haste+150 slim saíram do trânsito, OC voltou a 'a faturar'. Confirmado 21/jun."
 metadata: 
   node_type: memory
   type: project
   originSessionId: bc097805-a0ae-41ef-988e-5a1b9b9d8aab
 ---
+
+## ✅ NOVO (19/jun) — OCs a faturar com DATA DE ENTREGA EDITÁVEL (override) p/ simular antecipação
+A entrega das OCs abertas vem da **semana de entrega do portal** (ex.: OC 2026-55267-1 = 27/06, fim da semana 21–27/06). O CFO precisava ajustar p/ a data real. Feature (commit `4a401dc`): tabela `havan_oc_entrega(oc, entrega)` + `db.get/set_havan_oc_entrega` + helpers `_havan_oc_entrega_overrides`/`_apply_oc_entrega_overrides` (troca data_entrega e RECOMPUTA recebimento = entrega+121d, marca `tem_override_entrega`). Aplicado na FONTE em: `/api/cashflow`, `/api/provisao` e `/api/havan/aberto-detalhe` (todos os usos — schedule, impostos, CMV — herdam). POST `/api/havan/oc-entrega`. Frontend: input de data por OC no card "Antecipar OCs Havan a faturar" (borda verde=override do CFO, tracejada=portal). **OC 2026-55267-1 setada p/ 29/06** → recebimento 28/10. Espelha o padrão das faturadas (`havan_faturada_entrega`). Status atual da OC: "a faturar" (Sem nota), R$ 50.750.
 
 # ✅ RESOLVIDO (18/jun): OC Havan 2026-55267-1 — NF cancelada p/ refaturar
 

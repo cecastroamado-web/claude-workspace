@@ -7,6 +7,11 @@ metadata:
   originSessionId: e2af3fe4-597b-47f4-bda5-9f55613c3975
 ---
 
+## ✅ RESOLVIDO (19/jun) — em-trânsito só na JANELA ABERTA (mês corrente + anterior); fim do trânsito fantasma
+Bug (CFO 19/jun): 650 haste + 300 case apareciam "em trânsito como se faturado". Causa: NFs ANTIGAS já entregues (NF 561 jan/2026 — cujos 300 case foram DEVOLVIDOS e reemitidos na 564) figuravam como trânsito porque o **relatório de recebimento da Havan tem buraco PERSISTENTE em meses fechados** (haste jan=0; case jan=300 de 600). Como `_havan_em_transito_por_sku` fazia `faturado(all-time) − recebido(all-time)`, o buraco virava fantasma pra sempre. **Re-coleta NÃO corrige** (a lacuna está no portal, não é glitch transitório — testado).
+Fix (commit `693a44b`): `_havan_em_transito_por_sku` restringe faturado E recebido à **janela aberta = mês corrente + anterior** (cutoff = 1º dia do mês anterior). Meses fechados ficam **assentados** (NF entregue há semanas → não pode ser trânsito) e **imunes a buracos no relatório de meses antigos**. Só NFs ≤~60d podem estar a caminho do CD. `_havan_faturado_qtd_por_sku(conn, desde=)` + novo `_havan_recebido_recente_for_nf_sku(produtos, sku, cutoff_ym)` (soma recebido_mensais dos meses ≥ cutoff). Validado: haste 650→0, case 300→0; trânsito restante = só NFs de junho (581/586/588/589, reais). Mudança só de código (nada gravado no banco).
+**Otimização pendente (CFO sugeriu, não feita):** o scraper ainda re-consulta jan→jun toda coleta; ideal congelar meses fechados em cache e buscar só o mês corrente (mais rápido + imune a glitch de mês fechado). A correção acima já blinda o em-trânsito; o cache é ganho de performance separado.
+
 ## ✅ RESOLVIDO (18/jun) — Opção B: em-trânsito = faturado − recebido (não precisou do modelo de estoque)
 O relatório oficial de recebimento da Havan **voltou a atualizar** (junho populado: Slim 850, Haste 500, etc.) → o problema de 11/jun (relatório travado em 0) **se resolveu sozinho**. Então NÃO implementei o modelo de aumento-de-estoque (era workaround). Em vez disso (commit `3bf5f0e`):
 - **`_havan_em_transito_por_sku(conn, produtos, ...)`** agora = **faturado (NFs válidas, `_havan_faturado_qtd_por_sku`) − recebido (`recebido_periodo`, match via `_havan_recebido_for_nf_sku`)**. Removido o timer 15d. Se o relatório atrasar, itens ficam corretamente em trânsito até o recebimento aparecer.

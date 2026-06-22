@@ -196,19 +196,27 @@ de 27/06 (cartão 23/06) que antes era assumido pago 28/05 (passado, fora da pro
 c/ todas OCs antecipadas: 12/10 -77k→-110k (mais verdadeiro). Descasamento insumo×recebível é REAL
 (paga no cartão dias antes do recebível da OC); a antecipação das OCs é o que reduz o buraco. `_havan_aberto_cmv_lancamentos`.
 
-## ⏳ PENDENTE (CFO 16/jun) — fila de revisão do caixa
-- **Provisão card + antecipação some ao trocar filtro:** mesmo com "antecipar todas as OCs" marcado,
-  ao trocar o filtro p/ 120d a provisão mostra -556.172 em 12/10 (= número SEM antecipação; COM dá -167k).
-  CFO suspeita que o crédito da antecipação NÃO está sendo passado quando troca o filtro. Investigar o
-  frontend (ProvisaoCard `dias` vs o finance.antecipa_havan_aberto do parent) — pode não re-passar a
-  seleção ao mudar `dias`, ou o dashboard precisa rebuild/refresh. ⚠️ revisitar os CARDS da provisão.
-- **Pró-labore mal classificado:** está em `CATEGORIAS_ABAIXO_LINHA` (api.py:192) junto com dividendo.
-  É despesa OPERACIONAL (salário do sócio), ≠ dividendo (abaixo da linha). get_overview soma de volta em
-  despesas (api.py:1996-2005), mas a classificação base está errada → revisar no DRE com cuidado (não dobrar).
+## ✅ FILA DE REVISÃO DO CAIXA — VARRIDA E FECHADA (21/jun)
+Revisão completa das 6 sub-pendências da fila do caixa. **2 corrigidas agora (commit `a4db45b`), 4 já estavam resolvidas** (confirmadas por inspeção + teste HTTP):
+- ✅ **(a) clamp dias da provisão**: já era `max(7, min(dias, 180))` (api.py:19187). UI 90/120/180 funciona.
+- ✅ **(b) base de imposto da provisão ignorava exclude_from_revenue — CORRIGIDO**: as 4 queries (bling_nfe + bling_nfse, média 120d em ~19868/19875 e trimestral no `_rev` ~19890/19895) agora filtram `(exclude_from_revenue IS NULL OR =0)`, paridade com cashflow. Tirava ~R$11k de NF-e excluídas (favor pessoal) da base PIS/COFINS/IRPJ.
+- ✅ **(c) piso empréstimo ML R$30.500**: já implementado — cashflow `_loan_schedule` (api.py:4298 `max(25%,piso)`, `_LOAN_MIN_PMT=30500`), provisão topup (20606-20639) e data quitação (20375-20384).
+- ✅ **(d) pró-labore**: já tratado em TODOS consumidores sem dobrar — overview (1955/2055/2571), DRE (21704 entra no EBITDA via despesas_por_cat, 21802 campo zerado), histórico (3837 soma em desp / 3854 exclui de div). `_classifica` devolve abaixo_linha por design (decisão CFO 12/jun, api.py:207); consumidores somam corretamente. SEM dupla contagem.
+- ✅ **(e) guarda anti-dupla ADS na provisão — CORRIGIDO**: `get_contas_pagar_por_dia` (sheets.py ~931) pula anúncio ML (FAVORECIDO=Mercado Livre + conta MARKETING) — já projetado por `_ads_invoice_schedule`. Espelha `_is_anuncio_ml_sheets`. Latente hoje (0 ADS A VENCER), defensivo.
+- ✅ **(f) antecipação some ao trocar filtro — NÃO REPRODUZ**: testado via HTTP, backend aplica antecipação certo em 120d (12/10: SEM=-435.975, COM=+215.194). O "-556k" do CFO era o número SEM antecipação. Frontend monta `finance` com antecipa_havan_aberto + queryKey `['provisao',empresa,dias,finance]` (hash estrutural TanStack). Bug de 16/jun já resolvido nas correções de 16-17/jun. Não mexido (evita regressão especulativa).
 - **Reconciliação caixa×P&L (16/jun):** o "ML queima 82k/mês" foi ERRO meu — joguei CMV/insumos (192k =
   estoque), empréstimos pessoais (122k = financiamento), pró-labore (80k) e CAPEX no "burn". O ML é
   lucrativo (~20% rentab.). Caixa negativo = capital de giro (compra estoque) + amortização de dívida +
   pró-labore + ciclo Havan, NÃO prejuízo. Provisão é CAIXA, não P&L.
+
+## ✅ REVISÃO MÊS VIGENTE FECHADA (18/jun) — modelo sólido, sem mudança
+Revisão completa a pedido do CFO. Conclusões:
+- **Saldo real OK** (era confusão de filtro): XConnect-only = R$ 4.812,01 (INTER/NU/SANTANDER/SICREDI X CONNECT); **consolidado "Todas" = R$ 20.873,86** = 4.812 + **INTER AVIATION 16.061,85**. `_is_xconnect` pega tudo que não é Aviation/vazio; INTER AVIATION corretamente Aviation. CFO olha o consolidado. Nada a corrigir.
+- **Mês vigente (junho) correto**: `projecao_real[0]` projeta o RESIDUAL sobre saldo_real (dividendo reconciliado=0, impostos por competência, ML residual). Fim de junho projetado ~−139k consolidado (residual: 168k opex pendente + 57k impostos vs ~116k receita residual). As correções (dividendo/competência/burn/insumos) funcionam.
+- **Gráfico usa `projecao_real`** (detalhado), NÃO `projecao` (simples/média 3m). As duas não conversam (simples mostra +; detalhado mostra o ciclo Havan).
+- **Receita futura — investigada e VALIDADA como está (CFO decidiu manter conservador).** Mix por fonte (competência): ML caiu forte (Mar 539k→Abr 478k→Mai 218k→Jun ~218k anualiz., **−60%**); Havan lumpy (0–418k); **não-ML/não-Havan PEQUENO** (B2B outros + NFS-e ~11–117k/mês, média ~47k, em queda). Projeção usa ML run-rate recente (`ml_monthly_avg`=175k consolidado) + Havan (schedules) + recebíveis. NÃO projeta o ~47k/mês não-ML (viés conservador leve, CFO ok com isso).
+- **Queda da trajetória (jul-set lean → out-dez recupera) = ciclo de capital de giro da Havan, NÃO bug** (paga CMV/insumos antes do recebível de 121d).
+- ⚠️ **Sinal de negócio à parte:** ML −60% Mar→Mai (não é problema do modelo de caixa; vale acompanhar).
 
 ## 🔑 REGRA (CFO 16/jun) — TODA variável de simulação reflete no GRÁFICO E na PROVISÃO dia a dia
 Princípio de design: qualquer parâmetro de simulação (parcelamento de impostos, antecipa_havan,

@@ -7,6 +7,14 @@ metadata:
   originSessionId: 5c7eb85e-fc5e-4fc1-80b9-ec8a21e0ed02
 ---
 
+## ✅ DECISÃO CFO 21/jun — DRE por COMPETÊNCIA (já estava implementado)
+CFO decidiu: despesa por competência (consistente com a receita). **Já implementado e validado 21/jun** (era decisão CFO 14/jun, posterior à anotação 🔴 abaixo). `_comp_year_month` lê coluna COMPETENCIA (DD/MM/YYYY) com fallback ANO/MES; `_filter_sheets(bypass_pending=False)` categoriza despesa A VENCER (ANO=1899) pela competência, não pela data de pagamento. Teste real: 119 despesas A VENCER XConnect comp≤jun/2026 (R$391.791) TODAS entram no filtro. Loop do DRE exclui só competência FUTURA (receita futura tb não é projetada). Tributos lançados (CATEGORIAS_TRIBUTO_NORM) e INSUMOS tratados à parte (sem dobra no opex). Anual e mensal usam o mesmo filtro → reconciliam ao centavo. **Nada a mudar.** A seção 🔴 "regime competência×caixa" abaixo está OBSOLETA (resolvida).
+
+## ✅ REVISÃO 21/jun — itens 3/4/5 da fila do caixa fechados
+- **Param do Bling (item 3): JÁ CORRETO.** `agent/bling.py` usa `dataEmissaoInicial/Final` em todos os métodos (list_nfe, list_nfe_all, list_nfse). Zero resquício de `dataEmissaoInicio/Fim`. Bug já corrigido em commit anterior.
+- **Reconciliação chart mensal × anual do DRE (item 4): JÁ RESOLVIDO.** O gap de ~227k descrito abaixo (🔴) NÃO existe mais. Testado via HTTP `/api/dre?year=2026`: XConnect EBITDA anual 737.497,22 vs soma mensal 737.497,20 (gap R$0,02 arredondamento); Aviation gap R$0,01; consolidado gap R$0,00. Receita/líquido idem. CMV e tributos rateados reconciliam por construção (Σ rec_mês × taxa = total anual); despesas mensais e anuais ambas por competência (_filter_sheets, excluem futuro). Regime unificado em commit posterior à anotação do 227k.
+- **Comissão Rafael na Aviation (item 5): VALIDADO — não é fantasma.** Rafael tem 11 NF-e faturadas pela Aviation em 2026 (R$27.100) → `vendor_commission_config` 15% Aviation/Rafael é legítimo (regra CFO: recebe comissão pela Aviation se a venda for faturada lá). Eduardo (50% lucro) via Sheets COMISSÕES, sem dupla. **Corrigido typo** 'Rafael Ruczin**ki**'→'Ruczin**ski**' na NF 094 (DB; UPSERT do sync preserva vendedor, não reverte) — antes escapava do match do config.
+
 **✅ Pró-labore corrigido (18/jun):** `_classifica` devolve "abaixo_linha" p/ pró-labore, e os endpoints `/api/overview/competencia` + o de detalhe/categoria (api.py ~1921 e ~2540) **dropavam** ele (não entrava em despesa_op nem em abaixo_linha=div+capex) → resultado operacional superestimado em TODOS os períodos (XConnect: 2024 +41k, 2025 +240k, 2026 +230k; acum. 511k). Fix localizado: somar pró-labore no despesa_op desses 2 (constante `_PROLABORE_NORM`) + na quebra by_category. Demais consumidores (cash overview 2039, DRE endpoint 21080, cashflow) já o tratavam como despesa → não tocados (sem dupla contagem). Commit `e515bac`.
 
 **PENDENTE (anotado 12/jun/2026, a pedido do CFO):** revisar a **aba/relatório DRE** e o
