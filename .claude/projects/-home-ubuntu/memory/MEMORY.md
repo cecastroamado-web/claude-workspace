@@ -1,5 +1,8 @@
 # Memória dos Projetos
 
+## Infra do host
+- [Host: memória/swap thrashing](host_memoria_swap_thrashing.md) — host de 7,7GB roda 8 serviços/5 projetos; falta de RAM → swap thrashing congela processos e desalinha timers diários (parece "suspensão/salto de relógio", mas NÃO é). b3-alerts é o vilão (2,4GB, vaza até OOM). Mitigado jun/2026: MemoryMax no b3-alerts, OOMScoreAdjust=-500 no ecommerce-agent, swap 2→4GB.
+
 ## Projetos Ativos
 
 ### 0. finance-agent (`/home/ubuntu/finance-agent`) — 5 fases completas (2026-05-18)
@@ -98,6 +101,9 @@
 - Ver [CI GitHub do ecommerce-agent](ecommerce_ci_github.md) — ruff+mypy+pytest no push; ALTER manual no DB exige migração no db.py; side effects de import guardados por DB_PATH.exists(); fixtures forçam credenciais (poluição de coleta)
 - Ver [Feedback: testar só o que mudou](feedback_testar_so_o_que_mudou.md) — verificação 1:1 com o diff; pipeline de pedido Telegram NÃO está finalizado/validado (jun/2026), não usar como smoke test
 
+- [RONDOLINK — NF a 50% do real](ecommerce_rondolink_nf_50pct.md) — cliente emite NF por 50% (reduzir frete), paga 100% (entra no Sheets). Fase 1 FEITA: `customer_revenue_factor` (RONDOLINK=2.0) + param `customer_revenue_factors` no compute_profitability (excedente=margem pura, imposto/CMV sobre a NF). Margens −13%→44-54%. Fase 2 pendente: balde sem-nota (R$14.493, CMV 45%) via receita_sem_nota.
+- [CMV — mapeamento de kits e itens sem custo](ecommerce_cmv_mapeamento_kits.md) — product_kit_components (date-aware) + nfe_product_cost_map (alias/kit_name/cost_override) + order_items_detail.cost_override; precedência e validação por data da venda. Decisões jun/2026: kit Starlink Mini Gen 4 (sku 34, Bling), Case Injetado 88mm cores (Aviation), Adaptador 118w WOTOBUS (ML, custo R$100). Varredura: zero CMV zerado.
+- [Ventosa UTIMEX — Simples concede crédito ICMS 3,89%](ecommerce_ventosa_utimex_credito_simples.md) — NF 33.929 (23/jun/26), 9.000 un × R$3,05; gravado em product_costs do Case Slim Pro (XConnect, 4 ventosas=R$12,20, rate 0.0389). Simples ≠ sempre 0% crédito: checar campo "permite aproveitamento" na NF.
 - [NF-e barrada no Sheets por dedup favorecido+valor](ecommerce_nfe_sheets_dedup_fix.md) — NF Havan 586 não foi p/ "A RECEBER" (falso positivo: casou c/ NF 583 de valor idêntico). Fix: `get_existing_entries_index` só alimenta `fav_valor` com lançamentos SEM nº NF. 586 lançada (lin5601). SOTRIMA 047/059 não faltam (nº errado 71 no Sheets). (jun/2026)
 
 #### Fluxo de Caixa — simulações de financiamento (jun/2026)
@@ -113,6 +119,8 @@
 - `sync-status` retorna: `synced` (NF-e ML), `not_found` (entrega direta), `pending` (em trânsito), `total`
 - DIFAL via GNRE coletado pelo ML em nome do vendedor: `valor_icms_ufdest` (destino) + `valor_fcp_ufdest` (FCP)
 - XLSX export para contador: 3 abas — Resumo Mensal, Por Estado, Detalhe Mês×Estado
+
+- [Aviation TACOS — case ML](ecommerce_aviation_tacos_case.md) — margem do case (~22%) é espremida pelo ADS/TACOS (~19,6% = R$68/un), NÃO pelo preço; concorrente a R$319. Página `/simulacao-tacos-aviation` (matriz Preço×TACOS ao vivo + PDF), endpoints `/api/aviation/case-tacos[/pdf]` (jun/2026)
 
 #### Provisão de Caixa — modelo antecipação (abr/2026)
 - Ver [ecommerce_provisao_model.md](ecommerce_provisao_model.md) — lógica completa do `/api/provisao`
@@ -133,7 +141,7 @@
 - **Prazos de pagamento especiais por cliente** (`bling_sync.py` `_PRAZO_ESPECIAL`): HAVAN=120d, **ELETROMAR=60d** (jun/2026). Demais usam `company.boleto_days`. Vencimento estimado fica amarelo no Sheets até boleto real.
 - Ver [Mês vigente do fluxo — RESOLVIDO](ecommerce_cashflow_mes_vigente_realizado.md) — ✅ núcleo RESOLVIDO 16-18/jun (revisão fechada): dividendo reconcilia c/ já-pago (`d25d463`, api.py:4112), imposto por competência inclui o pago (api.py:4114), burn usa `historico_completo[-3:]` (`cfe6d11`, api.py:3889), insumos anti-dupla (`8b0c455`), buffer dinâmico. Confirmado 21/jun. SUB-PENDÊNCIAS na provisão (fila): clamp dias=60 vs UI 120; base imposto ignora exclude_from_revenue (R$11.412); guarda ADS latente; empréstimo ML piso 30,5k; pró-labore mal classificado; antecipação some ao trocar filtro.
 - Ver [DRE + competência + resultado operacional](ecommerce_dre_competencia_revisar.md) — ✅ "custo em dobro" REFUTADO (15/jun: CMV entra 1×, INSUMOS excluído do opex). ✅ chart mensal×anual reconcilia ao centavo (21/jun, gap 227k já não existe). ✅ param Bling correto. ✅ comissão Rafael Aviation validada (11 NFs lá; typo NF094 corrigido). Regime de competência unificado. ✅ DECISÃO CFO 21/jun: DRE por COMPETÊNCIA (já implementado — despesa A VENCER entra pela coluna COMPETENCIA, exclui só futura; validado 119 despesas/R$391k). ICMS crédito por competência venda vs entrada = timing, não bug.
-- Ver [Receita sem documento fiscal — auditoria](ecommerce_receita_sem_nota.md) — vendas recebidas no caixa SEM NF-e (favorecido≠X Connect Import no Sheets). Sem-nota CONFIRMADO ≥R$5k = R$615.463 (Israel, Startecno, Star2go-excedente, etc.); 21 a confirmar (~R$252k) + cauda <R$5k. Match por NOME (não valor) vs NF-e situacao=6 E NFS-e. CMV por ANO (2024~31%/2025~43%/2026~38%), sem comissão ML/imposto/overhead. XLSX `receita_sem_nota_REVISAR.xlsx` (4 abas) no Telegram p/ CFO marcar S/N. **Nada gravado no banco até CFO fechar.** 🔔 LEMBRAR 16/jun: CFO vai marcar S/N dos 21 ≥R$5k (varredura: só #9 JDD R$14.298 provável nota).
+- Ver [Receita sem documento fiscal — auditoria](ecommerce_receita_sem_nota.md) — vendas recebidas no caixa SEM NF-e (favorecido≠X Connect Import no Sheets). Sem-nota CONFIRMADO ≥R$5k = R$615.463 (Israel, Startecno, Star2go-excedente, etc.); 21 a confirmar (~R$252k) + cauda <R$5k. Match por NOME (não valor) vs NF-e situacao=6 E NFS-e. CMV por ANO (2024~31%/2025~43%/2026~38%), sem comissão ML/imposto/overhead. XLSX `receita_sem_nota_REVISAR.xlsx` (4 abas) no Telegram p/ CFO marcar S/N. **Nada gravado no banco até CFO fechar.** 🔔 LEMBRAR 16/jun: CFO vai marcar S/N dos 21 ≥R$5k (varredura: só #9 JDD R$14.298 provável nota). **27/jun:** só RONDOLINK está lançada; os 7 confirmados NUNCA foram persistidos (quebra por ano computada = R$640.496, conferir Israel 196k+Star2go NF 2026); XLSX reenviado, CFO valida 28/jun os R$294.902 (251.679+43.223); design DRE = linhas separadas por cliente + linha de CMV por ano.
 - Ver [Líquido Havan por SKU pós-carry 121d](ecommerce_havan_liquido_carry_sku.md)
 - Ver [Havan em trânsito CD→loja + expansão de rede](ecommerce_havan_em_transito_expansao.md) — coluna 🚚 no ranking + seção "Filiais recebendo" (exclui CD) + indicador "Expansão de rede". `qtdEstoqueTransito`→`havan_branch_product.em_transito` (migração). 16/jun: 71 filiais recebendo, 18 lojas estabelecidas entrando com a linha (venda_total=0, NÃO lojas novas). Popula na coleta 06h. — análise PLANEJADA (não codada): líquido = preço atacado − CMV(China 2026) − comissão Mark 1% − impostos LP − carry 121d (~Selic×121/365 ≈ 5pp). CFO avalia líquido Havan 20-32% (ok p/ atacadista grande). B2B avulso tem + margem (ativação embutida). EXECUTADO 15/jun: ponderado LIMPO 30,6% (case 88mm via order_item_component_override; DRE trata canceladas 547/552 e 66/88mm corretamente). Excel havan_liquido_por_sku.xlsx no Telegram.
 

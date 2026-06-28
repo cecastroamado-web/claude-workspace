@@ -7,6 +7,14 @@ metadata:
   originSessionId: bc097805-a0ae-41ef-988e-5a1b9b9d8aab
 ---
 
+## ✅ Painéis de evolução/saúde do canal + alerta de ativação (18/jun/2026)
+- **`havan_branch_product` RETÉM histórico diário** (snapshot por `captured_date`, coleta 06h) — começou **05/jun/2026**. Permite séries temporais (≠ "foto de agora"). Hoje 147 lojas (excl CD "CDH BARRA VELHA"); baseline 05/jun = 109. CD identificado por regex `\bCDH?\b|CENTRO DE DISTRIB`.
+- **Endpoint `/api/havan/filiais-evolucao`** (api.py, após filiais-report): `serie` (diária: total/ativas/novas estabelecidas-vs-entrando-com-linha), `mensal` (último snapshot/mês), `por_uf`/`por_regiao` (total/vende/venda_30d/novas/parado/ruptura), `kpis` (taxa_ativacao, sell_out_medio/mediana/top, parado/ruptura lojas, distribuicao por faixa 0/1-4/5-14/15-29/30+), `ativacao` (curva entrada→1ª venda). Hook `useHavanFiliaisEvolucao`.
+- **Frontend (página Havan):** 2 cards — "Expansão de filiais" (footprint + ComposedChart total/ativas/novas-dia) e "Saúde e geografia do canal" (5 KPIs + distribuição sell-out por faixa + barras por região + tabela por UF + curva). **Penetração** = lojas ÷ total da rede (default **196**, editável via localStorage `havan_rede_total`).
+- **Estado atual (18/jun):** penetração ~75%, ativação 70% (103/147 vendem), sell-out média 8,7 / mediana 8 / top 29 un/30d (rede equilibrada), 36 lojas estoque parado, 4 ruptura. Sul concentra (81 lojas, +26 novas); SP/Sudeste fronteira (baixa ativação, recém-chegou).
+- **⚠️ Curva de ativação NÃO mensurável ainda:** coleta de 13 dias; das 36 lojas que entraram sem venda, **0 ativaram** (esperando ≤7d). Não há ciclo entrada→1ª venda completo. Calibra com o tempo.
+- **Alerta `check-havan-ativacao`** (scheduler.py, diário 09h): lojas que entraram (1ª aparição > baseline), têm estoque, mas seguem sem 1ª venda (`venda_total=0`) há **≥21 dias** (default ajustável `dias=`). Ignora filiais do baseline (entrada real desconhecida); anti-spam `scheduler_state.havan_ativacao_alerted` (sep `|`); `_notify` bool guard. Hoje dispara 0 (mais antiga 7d); 1º disparo possível ~início jul.
+
 # Havan — Em trânsito (CD→loja) + Expansão de rede (16/jun/2026)
 
 Feature implementada a pedido do CFO: saber, por filial, se está **pra receber produto** (estoque saindo

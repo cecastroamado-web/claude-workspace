@@ -7,6 +7,12 @@ metadata:
   originSessionId: 826e85a9-889a-4588-8c15-645fd21d1225
 ---
 
+## ✅ MULTI-EMPRÉSTIMO (19/jun/2026) — 2º contrato Sicredi + distinção 1/2
+- **2º empréstimo Sicredi** contratado 19/jun: XConnect, **R$ 450.000, 60x SAC, 0,40%+Selic, 1ª parcela 28/07/2026, a cada 30 dias** (mesmos moldes do 1º; 1º tem 1ª parcela 18/07). Total contratado agora ~R$ 900k.
+- Tabela `sicredi_loan_config` **migrada de singleton (CHECK id=1) p/ multi-linha** (id autoincrement; migração idempotente no db.py recria a tabela). `_sicredi_loan_schedule` itera TODOS os contratos habilitados (ORDER BY id) e soma por dia; retorna 6-tupla `(due, parc, k, n, emp, loan_num)`.
+- **Distinção 1/2:** provisão (descrição "Parcela Empréstimo Sicredi {n} (k/60)") e gráfico do cashflow (campo `sicredi_loans` = [{num, valor}] por mês; `monthLines` renderiza "Parcela Empréstimo Sicredi 1/2"). Total ainda em `sicredi_loan_pmt`.
+- ✅ **Card multi-empréstimo (UI) — FEITO** (commit `4a401dc`): endpoints GET/POST `/api/sicredi-loans` (lista + upsert por id), DELETE `/api/sicredi-loans/{id}`, evolução por `?id=`. `db.get/upsert/delete_sicredi_loan_config`. `SicrediLoanCard.tsx` reescrito p/ lista (add/editar/remover por contrato + custo por empréstimo). **IOF por empréstimo = base + adicional** (cada empréstimo tem 2 débitos IOF no Sheets: IOF ~12.290 + adicional 1.710). Loan 1 IOF=R$14.000,16, Loan 2 IOF=R$14.006,92 (override manual; `_sicredi_iof_auto` soma TODOS os IOF da conta SICREDI = 28.007, não dá p/ atribuir por contrato). IOF + desembolso já realizados no Sheets (19/06: EMPRESTIMO +450k, IOF −12.296,92 e −1.710) → no saldo, sem modelar saída futura.
+
 # Empréstimo Sicredi (capital de giro) na provisão de caixa (10/jun/2026)
 
 Empréstimo Sicredi contratado 10/jun/2026: **XConnect, R$ 450.000, 60 parcelas, SAC,

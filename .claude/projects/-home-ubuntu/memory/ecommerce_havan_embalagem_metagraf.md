@@ -28,17 +28,22 @@ A Havan recebe **caixa de papelão separada** (fornecedor **Metagraf**, NÃO "Me
 | HVNHSHAXXX008A | Haste | 2,58 | 0,387 | sim | 2026-06-01 |
 | HVNSPPASLMIVE4C | Case Painel | 3,28 | 0,492 | sim | 2026-06-01 (500 pç faturadas) |
 
-Custo unitário das caixas vem das **NFs Metagraf** (em `/home/ubuntu/nfs_entrada/`): Painel NF 165647 (3.050×3,28), Injetado NF 163851 (3.025×3,98, "Case Starlink Mini"), Haste NF 165132 (3.300×2,58), Slim NF 162916 (1.600×3,28, "Estojo Connect"). Todas X Connect matriz RS, entrega Gedeval.
+Custo unitário das caixas vem das **NFs Metagraf** (em `/home/ubuntu/nfs_entrada/`), todas X Connect matriz RS, entrega Gedeval, IPI 15%:
+- **Slim → NF 162916/3, emissão 19/03/2026** — "ESTOJO CONNECT 245×120×45mm" (cód. 61612), **1.600 un × R$ 3,28 = R$ 5.248,00** (IPI 15% = R$0,492/un). Bate exatamente com `havan_embalagem` Slim Pro (3,28 + 0,492). ✅ CONFIRMADO 24/jun.
+- Injetado/Mini → NF 163851/3 (17/04/2026) — "Cartucho Case Starlink Mini 336×332×52mm", 3.025×3,98.
+- Haste → NF 165132/3 (29/05/2026) — "Cart Haste 250×100×100mm", 3.300×2,58.
+- Painel → NF 165647/3 (15/06/2026) — "Cartucho Case Painel 380×180×50mm", 3.050×3,28.
 
 ## Mapeamento (importante — não confundir produto)
 Itens Havan mapeiam via `nfe_product_cost_map`: Case `HVNCSPLIM660` → **"Case Injetado 66mm XConnect"** (+ `order_item_component_override` do imã 88mm = 127,04), NÃO o "88mm". Slim → "Case Slim Pro para vidros retos"; Haste → "Haste"; Painel → "Case Painel Mini c/ Ventosa".
 
-## Slim Pro vs Slim Pro 2 (não confundir)
-- **Slim Pro** mantém **3 ventosas × R$ 11,57** (R$ 34,71). NÃO mexer. Na Havan = SKU `HVNCSSLPRVI00SC` → mapeia "Case Slim Pro para vidros retos" (deixar assim).
-- **Slim Pro 2** = produto **"Case Slim c/ 4 Ventosas"**: corpo do Slim (Produto 25,935) + **4 ventosas transparentes × R$ 3,05 = 12,20 @ ICMS 4%** (provisório, revisar c/ nota do fornecedor) + embalagem = a do Slim Pro (R$ 3,28+IPI, via hook Havan). Base bruta 38,135.
-  - **Cadastrado**: `product_costs` Aviation (vende no ML como "Case Slim") + XConnect (base pronta p/ a Havan). component Produto 25,935@0.17 + Ventosas 12,20@0.04, effective 2000-01-01.
-  - **Havan**: a Havan **até hoje só comprou Slim Pro**; o Slim Pro 2 começa **nos próximos meses com SKU NOVO (diferente)**. Quando o SKU novo existir: mapear (nfe_product_cost_map) → "Case Slim c/ 4 Ventosas" + adicionar ao `havan_embalagem` com a caixa Slim. NÃO repontar o HVNCSSLPRVI00SC.
-- Ventosa transparente = insumo novo (`VEN-TRANSP` na planilha), compra de 9 mil prevista p/ pedido Havan; ICMS provisório 4% — **revisar 02/jul** c/ nota do fornecedor.
+## Slim Pro vs Slim Pro 2 (não confundir) — RESOLVIDO 27/jun/2026
+- **Slim Pro** mantém **3 ventosas × R$ 11,57** (R$ 34,71). NÃO mexer. Na Havan = SKU `HVNCSSLPRVI00SC` → mapeia "Case Slim Pro para vidros retos" (CMV base ~R$ 60,64; com caixa ~R$ 62,42). Deixar assim.
+- **Slim Pro 2** usa **4 ventosas baratas × R$ 3,05 = R$ 12,20** (vs 3×11,57 do regular). Corpo 25,935 + ventosas 12,20 = **base R$ 38,13**; com caixa Slim ~R$ 39,91. Diferença vs Slim Pro = exatamente **R$ 22,51** (34,71 − 12,20).
+- **SKU novo da Havan JÁ EXISTE**: `HVNCSSLVICU00Q2` ("SUPORTE SLIM PRO 2 PARA STARLINK XCONNECT") no snapshot. product_cost dedicado **"Case Slim Pro 2"** (XConnect+Aviation, effective 2026-06-23: corpo 25,935@0.17 + ventosas 12,20@0.0389). `havan_embalagem` já tem o SKU com a caixa Slim (3,28+IPI, base−2).
+- **BUG corrigido (api.py `_HAVAN_CMV_MAP`)**: a regra genérica `["SLIM"]` casava com Slim Pro **E** Slim Pro 2 → os dois pegavam o CMV do Slim regular (no painel `/api/havan` apareciam iguais). Fix: regra específica **`["SLIM","PRO 2"] → "Case Slim Pro 2"` ANTES** da `["SLIM"]` (1ª regra que casa vence). "PRO 2" distingue limpo (regular não contém). NÃO mexeu no HVNCSSLPRVI00SC. Validado no painel: Slim Pro 2 R$ 39,91 vs Slim Pro R$ 62,42.
+- **Pendente quando houver venda real**: o preço de atacado/varejo dos dois está igual no snapshot (R$ 85 / R$ 149,90) — decisão comercial, não bug. E ao faturar NF-e real do Slim Pro 2, garantir o `nfe_product_cost_map` (nome da NF → "Case Slim Pro 2") p/ a rentabilidade por pedido. ICMS das ventosas (0.0389) provisório — revisar c/ nota do fornecedor.
+- Ventosa transparente = insumo novo (`VEN-TRANSP` na planilha), compra de 9 mil prevista p/ pedido Havan. **Crédito ICMS 3,89% CONFIRMADO (27/jun)**: CFO recebeu a NF — fornecedor é do Simples mas a NF **autoriza aproveitamento de 3,89%**. Já gravado: Slim Pro 2 XConnect ventosas `cred 0,0389` (vai p/ Havan via `_havan_unit_cost` company='XConnect'). Aviation fica 0 (Simples não credita ICMS no modelo de rentabilidade). Ver [[ecommerce-ventosa-utimex-credito-simples]]. NÃO é mais provisório.
 
 ## Planilha de insumos (entradas FEITAS 17/jun; saídas pendentes)
 Planilha de imãs/insumos = **.xlsx no Drive** `1a0G6lDQjMc...` (NÃO é Sheet nativo → Sheets API recusa; só Drive API download+openpyxl+`files().update`). Abas: Parametros/Entradas 2026/Saídas 2026/Estoque Atual 2026/Consumo Padrão.

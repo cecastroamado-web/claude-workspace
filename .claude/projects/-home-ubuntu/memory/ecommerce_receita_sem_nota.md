@@ -9,6 +9,45 @@ metadata:
 
 # Receita sem documento fiscal (vendas sem NF-e) — auditoria p/ DRE (CFO 15/jun/2026)
 
+## 🟡 ESTADO 27/jun/2026 (retomada — em andamento, NADA gravado ainda)
+**Decisão de design do CFO p/ o DRE:** lançar como **LINHAS SEPARADAS** — uma "Receita sem documento
+fiscal" **por cliente** + uma **linha de CMV correspondente** (CMV por ano: 2024 31% / 2025 43% /
+2026 38%), sem imposto/comissão (margem pura). Isso **VAI MEXER no resultado do DRE de hoje** (sobe
+receita e sobe CMV).
+
+**Achado crítico:** só a **RONDOLINK** está de fato lançada (`customer_semnota_adjust` + Rentabilidade).
+Os **7 "confirmados grandes" foram DECIDIDOS em 15/jun mas NUNCA persistidos** — não estão na
+Rentabilidade nem no DRE. Precisam ser gravados.
+
+**Quebra por ANO dos 7 confirmados — computada 27/jun do Sheets (recebido − NF sit.6, fator 1):**
+| Cliente | 2024 | 2025 | 2026 | Total |
+|---|--:|--:|--:|--:|
+| Israel Teixeira | 70.200 | 119.700 | 6.200 | 196.100 |
+| Startecno | 117.500 | — | — | 117.500 |
+| Star2go | — | 42.635 | 83.950 | 126.585 |
+| Thiago Velloso | 10.221 | 51.800 | 12.810 | 74.831 |
+| Welliton Mario | 17.625 | 33.975 | — | 51.600 |
+| Juliano Pich | — | 40.480 | — | 40.480 |
+| Augusto Franca | — | 33.400 | — | 33.400 |
+| **TOTAL** | **215.546** | **321.990** | **102.960** | **640.496** |
+
+⚠️ **2 pontos a confirmar c/ CFO antes de gravar** (valores subiram vs memória 15/jun):
+1. **Israel 196.100** (era ~159.100): inclui Pix `"Cp:18236120-Isra…"` R$105.000 + "Israel Teixeira Neto
+   Nascimento" R$91.100 — confirmar se o Pix de 105k é dele.
+2. **Star2go 126.585** com R$83.950 em 2026: CFO disse que faturou a partir de 2026, mas a busca de NF
+   sob "STAR2GO" deu 0 (pode estar com outro customer_name) → se há NF 2026, o excedente real é MENOR.
+Os outros 5 batem. Script da apuração: `/tmp/.../scratchpad/semnota_7.py` (lê Sheets 1×, fator 1, mostra favorecidos casados).
+
+**Lista a validar (CFO faz AMANHÃ 28/jun):** XLSX `receita_sem_nota_REVISAR.xlsx` **reenviado no Telegram**
+(2 abas): **≥5k = 21 itens R$251.679** + **<5k = 29 itens R$43.223** = **R$294.902** a fechar. Marcar
+coluna SEM_NOTA(S/N). ⚠️ #9 JDD R$14.298 = provável NOTA (EMTECH TELECOM JDD).
+
+**Próximo passo (quando CFO devolver):** juntar S validados + 7 confirmados (gravar em
+`customer_semnota_adjust` por ano) → wire no `get_dre` (linhas separadas + CMV por ano). Mecanismo já
+existe no `_compute_profit_df_for_period` (linhas sintéticas `_source='semnota'`, api.py:7570) e o DRE
+HOJE NÃO inclui sem-nota (é a origem do resíduo R$1.863 RONDOLINK na paridade CMV DRE×Rentab — ver
+[[ecommerce-dre-competencia-revisar]] A2). Script de persistência RONDOLINK-style: `scripts/recompute_semnota_snapshot.py` (factor de `customer_revenue_factor`).
+
 > **🔴 PENDENTE (reaberto 18/jun/2026):** incluir o **faturamento sem nota no DRE** de gestão. CFO ainda precisa marcar S/N no XLSX (`receita_sem_nota_REVISAR.xlsx`: 21 ≥R$5k + 29 <R$5k). Depois: separar por ano, aplicar CMV (2024~31%/2025~43%/2026~38%) e lançar a linha "Receita sem documento fiscal" no DRE. **NADA gravado no banco até o CFO fechar.**
 
 **Origem:** o DRE conta receita só de NF-e (`bling_nfe`) + ML. Mas houve **venda recebida no caixa SEM

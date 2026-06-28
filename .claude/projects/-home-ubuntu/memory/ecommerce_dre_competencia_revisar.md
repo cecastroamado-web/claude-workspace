@@ -7,6 +7,17 @@ metadata:
   originSessionId: 5c7eb85e-fc5e-4fc1-80b9-ec8a21e0ed02
 ---
 
+## ✅ A2 RESOLVIDO (27/jun, commit 4f78c9c) — CMV do DRE = Rentabilidade
+`get_dre` chamava `compute_profitability` SEM `product_components_history` + `item_component_overrides`
++ `icms_credit_rate_history` (que `_compute_profit_df_for_period` passa). Itens com override de componente
+(case Havan c/ imã 88mm, NFs 582/579/564) usavam custo padrão → DRE superestimava lucro bruto (~R$62k).
+Fix: carregar e passar os 3 args (api.py:21889+ e na chamada ~22035). **Validado vivo:** CMV DRE×Rentab
+Aviation R$0,00; XConnect cai de ~62k p/ **R$1.863** (resíduo = `cost_ref_date` 01/01 rentab vs 31/12 DRE —
+item cosmético, NÃO corrigido por decisão de timing). **Re-auditoria 27/jun:** demais ⏳/🔴 da seção
+"A INVESTIGAR (14/jun)" foram superados pelos ✅ de 21/jun (regime competência, chart reconcilia, imposto
+híbrido). NFS-e não é bug — endpoint próprio `/api/services-profitability`. Aberto só: ESTOQUE/ENDIVIDAMENTO
+no painel (decisão de design) e o resíduo cosmético do cost_ref_date.
+
 ## ✅ DECISÃO CFO 21/jun — DRE por COMPETÊNCIA (já estava implementado)
 CFO decidiu: despesa por competência (consistente com a receita). **Já implementado e validado 21/jun** (era decisão CFO 14/jun, posterior à anotação 🔴 abaixo). `_comp_year_month` lê coluna COMPETENCIA (DD/MM/YYYY) com fallback ANO/MES; `_filter_sheets(bypass_pending=False)` categoriza despesa A VENCER (ANO=1899) pela competência, não pela data de pagamento. Teste real: 119 despesas A VENCER XConnect comp≤jun/2026 (R$391.791) TODAS entram no filtro. Loop do DRE exclui só competência FUTURA (receita futura tb não é projetada). Tributos lançados (CATEGORIAS_TRIBUTO_NORM) e INSUMOS tratados à parte (sem dobra no opex). Anual e mensal usam o mesmo filtro → reconciliam ao centavo. **Nada a mudar.** A seção 🔴 "regime competência×caixa" abaixo está OBSOLETA (resolvida).
 

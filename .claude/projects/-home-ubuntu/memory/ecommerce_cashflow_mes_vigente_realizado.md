@@ -1,11 +1,19 @@
 ---
 name: ecommerce-cashflow-mes-vigente-realizado
-description: Pendência (ecommerce-agent) — mês vigente do fluxo de caixa/gráfico/provisão não desconta dividendos e despesas op JÁ PAGAS no mês
+description: RESOLVIDO (21/jun/2026) — mês vigente do fluxo/gráfico/provisão; dividendo e imposto do mês já não contam em dobro. Histórico de auditoria abaixo.
 metadata: 
   node_type: memory
   type: project
   originSessionId: bc097805-a0ae-41ef-988e-5a1b9b9d8aab
 ---
+
+> ✅✅ **STATUS GERAL (confirmado no código 27/jun/2026): TUDO RESOLVIDO.** Os marcadores ⏳ abaixo são
+> HISTÓRICOS e foram superados pelos ✅ no mesmo arquivo. Confirmado no código: dividendo do mês vigente
+> `max(0, modelado − já_pago)` (api.py:4224 + 5905-5909); imposto efetivado do mês entra no `_tax_overrides`
+> por COMPETÊNCIA (api.py:4228-4242); piso empréstimo ML 30,5k (4298/20606); clamp provisão 180d (19187).
+> Únicos itens ainda em aberto (por escolha, não bug): card "Havan a faturar" — revisar APRESENTAÇÃO
+> (recebíveis fora da janela curta); e CMV de reposição ML na provisão — DEFERIDO até crescer.
+> NÃO re-listar os ⏳ como pendência sem ler os ✅ correspondentes.
 
 **PENDENTE (anotado 12/jun/2026, a pedido do CFO — PARA ESTUDARMOS, nada codado):** ao analisar o
 **fluxo de caixa financiado**, o CFO simulou e notou que **dividendos já pagos no mês** e
